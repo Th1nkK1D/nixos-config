@@ -104,6 +104,8 @@ in
   };
 
   hardware = {
+    # Load amdgpu in initrd so the LUKS prompt uses native KMS instead of simpledrm
+    amdgpu.initrd.enable = true;
     bluetooth = {
       enable = true;
       powerOnBoot = false;

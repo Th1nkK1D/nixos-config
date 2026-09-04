@@ -424,8 +424,14 @@ in
     download-attempts = 10;
     stalled-download-timeout = 120;
     connect-timeout = 15;
-    substituters = [ "https://cache.nixos-cuda.org" ];
-    trusted-public-keys = [ "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" ];
+    substituters = [
+      "https://cache.nixos-cuda.org"
+      "https://cache.numtide.com"
+    ];
+    trusted-public-keys = [
+      "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
+      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+    ];
   };
 
   nixpkgs = {
@@ -656,7 +662,7 @@ in
         caddy
         chezmoi
         chromium
-        claude-code
+        inputs.llm-agents.packages.${system}.claude-code
         cloudflared
         curtail
         dankcalendar
@@ -730,7 +736,7 @@ in
         papers
         parallel
         pdfarranger
-        (pi-coding-agent.overrideAttrs (
+        (inputs.llm-agents.packages.${system}.pi.overrideAttrs (
           finalAttrs: previousAttrs: {
             # Save npm extension in pi agent folder instead of global
             postFixup = ''

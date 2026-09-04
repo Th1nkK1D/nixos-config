@@ -14,6 +14,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+    # Intentionally not following nixpkgs: it's only tested against its own pin
+    # and the binary cache only hits when the nixpkgs revision matches
+    llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
   outputs =

@@ -17,10 +17,12 @@ let
   rWithPackages = pkgs.rWrapper.override { packages = rPackagesList; };
   arkWithPackages = pkgs.ark.override { R = rWithPackages; };
   system = pkgs.stdenv.hostPlatform.system;
+  llmAgents = inputs.llm-agents.packages.${system};
   spicedSpotify = inputs.spicetify-nix.lib.mkSpicetify pkgs {
     theme = inputs.spicetify-nix.legacyPackages.${system}.themes.ziro;
     colorScheme = "green-dark";
   };
+  zenBrowser = inputs.zen-browser.packages.${system}.default;
 in
 {
 
@@ -303,49 +305,6 @@ in
             signing.format = "openpgp";
           };
           starship.enable = true;
-          # vscodium = {
-          #   enable = true;
-          #   profiles.default.extensions =
-          #     with pkgs.vscode-extensions;
-          #     [
-          #       anthropic.claude-code
-          #       biomejs.biome
-          #       catppuccin.catppuccin-vsc
-          #       catppuccin.catppuccin-vsc-icons
-          #       dbaeumer.vscode-eslint
-          #       docker.docker
-          #       jnoortheen.nix-ide
-          #       ms-python.python
-          #       oxc.oxc-vscode
-          #       prettier.prettier-vscode
-          #       streetsidesoftware.code-spell-checker
-          #       svelte.svelte-vscode
-          #       reditorsupport.r
-          #       reditorsupport.r-syntax
-          #       vue.volar
-          #       wakatime.vscode-wakatime
-          #     ]
-          #     ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
-          #       {
-          #         name = "flow-icons";
-          #         publisher = "thang-nm";
-          #         version = "2.0.9";
-          #         hash = "sha256-oTkkKVdddCOsMQZ3j1Ouo84zrR/iAltJecjHVf5v0Zg=";
-          #       }
-          #       {
-          #         name = "mayukaithemevsc";
-          #         publisher = "gulajavaministudio";
-          #         version = "3.3.0";
-          #         hash = "sha256-t+T752IOtr7NYXegB1vihWWM7Ioe4a8TicWSnx8mXyI=";
-          #       }
-          #       {
-          #         name = "ultra-instinct-theme";
-          #         publisher = "juanlias";
-          #         version = "1.0.1";
-          #         hash = "sha256-lSLpN2ls/0HoLCF1QDQys0g6CqgDbm1tXkM9mIhvDbg=";
-          #       }
-          #     ];
-          # };
         };
         services = {
           syncthing = {
@@ -444,7 +403,8 @@ in
       android_sdk.accept_license = true;
       cudaSupport = true;
       permittedInsecurePackages = [
-        "electron-40.10.5"
+        "beekeeper-studio-6.0.5"
+        "keybase-gui-6.5.1"
       ];
     };
     overlays = [
@@ -664,7 +624,6 @@ in
         caddy
         chezmoi
         chromium
-        inputs.llm-agents.packages.${system}.claude-code
         cloudflared
         curtail
         dankcalendar
@@ -691,7 +650,6 @@ in
         grim
         grc
         gthumb
-        herdr
         httpie
         hunspell
         hunspellDicts.en_US
@@ -712,6 +670,17 @@ in
         libreoffice
         libsecret
         libwebp
+        llmAgents.claude-code
+        llmAgents.herdr
+        (llmAgents.pi.overrideAttrs (
+          finalAttrs: previousAttrs: {
+            # Save npm extension in pi agent folder instead of global
+            postFixup = ''
+              wrapProgram $out/bin/pi \
+                --set NPM_CONFIG_PREFIX "/home/lkz/.pi/agent/.npm/" \
+            '';
+          }
+        ))
         lumen
         (mailspring.overrideAttrs (
           finalAttrs: previousAttrs: {
@@ -724,7 +693,6 @@ in
           }
         ))
         micro
-        moon
         nautilus
         nginx-language-server
         nil
@@ -738,19 +706,9 @@ in
         papers
         parallel
         pdfarranger
-        (inputs.llm-agents.packages.${system}.pi.overrideAttrs (
-          finalAttrs: previousAttrs: {
-            # Save npm extension in pi agent folder instead of global
-            postFixup = ''
-              wrapProgram $out/bin/pi \
-                --set NPM_CONFIG_PREFIX "/home/lkz/.pi/agent/.npm/" \
-            '';
-          }
-        ))
         pnpm
         (python3.withPackages (
           ps: with ps; [
-            aiohttp-oauthlib
             ipykernel
             matplotlib
             notebook
@@ -801,7 +759,7 @@ in
         wl-mirror
         xwayland-satellite
         zed-editor
-        inputs.zen-browser.packages.${system}.default
+        zenBrowser
         zoom-us
         zotero
       ];

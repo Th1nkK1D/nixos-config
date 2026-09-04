@@ -75,69 +75,6 @@ in
     };
   };
 
-  # Bind font for flatpak
-  # https://wiki.nixos.org/wiki/Fonts#Solution_3:_Configure_bindfs_for_fonts/cursors/icons_support
-  fileSystems =
-    let
-      mkRoSymBind = path: {
-        device = path;
-        fsType = "fuse.bindfs";
-        options = [
-          "ro"
-          "resolve-symlinks"
-          "x-gvfs-hide"
-        ];
-      };
-
-      fontsPkgs =
-        config.fonts.packages
-        ++ (with pkgs; [
-          gnome-themes-extra
-          ibm-plex
-          noto-fonts-color-emoji
-          posy-cursors
-        ]);
-
-      x11Fonts =
-        pkgs.runCommand "X11-fonts"
-          {
-            preferLocalBuild = true;
-            nativeBuildInputs = with pkgs; [
-              gzip
-              mkfontscale
-              mkfontdir
-            ];
-          }
-          (
-            ''
-              mkdir -p "$out/share/fonts"
-              font_regexp='.*\.\(ttf\|ttc\|otb\|otf\|pcf\|pfa\|pfb\|bdf\)\(\.gz\)?'
-            ''
-            + (builtins.concatStringsSep "\n" (
-              map (pkg: ''
-                find ${toString pkg} -regex "$font_regexp" \
-                  -exec ln -sf -t "$out/share/fonts" '{}' \;
-              '') fontsPkgs
-            ))
-            + ''
-              cd "$out/share/fonts"
-              mkfontscale
-              mkfontdir
-              cat $(find ${pkgs.font-alias}/ -name fonts.alias) > fonts.alias
-            ''
-          );
-
-      aggregatedIcons = pkgs.buildEnv {
-        name = "system-icons";
-        paths = fontsPkgs;
-        pathsToLink = [ "/share/icons" ];
-      };
-    in
-    {
-      "/usr/share/icons" = mkRoSymBind (aggregatedIcons + "/share/icons");
-      "/usr/share/fonts" = mkRoSymBind (x11Fonts + "/share/fonts");
-    };
-
   fonts = {
     enableDefaultPackages = true;
     fontconfig = {
@@ -627,7 +564,6 @@ in
         configHome = "/home/lkz";
       };
     };
-    flatpak.enable = true;
     geoclue2.enable = true;
     gnome.gnome-keyring.enable = true;
     gvfs.enable = true;
@@ -680,14 +616,9 @@ in
     ];
   };
 
-  system = {
-    fsPackages = [ pkgs.bindfs ];
-    stateVersion = "25.11";
-  };
+  system.stateVersion = "25.11";
 
   systemd.user = {
-    # Flatpak open default app https://github.com/NixOS/nixpkgs/issues/189851#issuecomment-1238907955
-    settings.Manager.DefaultEnvironment = "PATH=/run/current-system/sw/bin";
     # KBFS workaround https://github.com/NixOS/nixpkgs/issues/278277
     services.kbfs.serviceConfig.PrivateTmp = lib.mkForce false;
   };
@@ -742,7 +673,6 @@ in
         gitleaks
         gnome-font-viewer
         gnome-network-displays
-        gnome-software
         gnome-text-editor
         gnome-themes-extra
         gnumake

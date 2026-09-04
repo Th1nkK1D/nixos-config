@@ -17,9 +17,8 @@ let
   rWithPackages = pkgs.rWrapper.override { packages = rPackagesList; };
   arkWithPackages = pkgs.ark.override { R = rWithPackages; };
   system = pkgs.stdenv.hostPlatform.system;
-  spicetify-nix = inputs.spicetify-nix.legacyPackages.${system};
-  spicedSpotify = spicetify-nix.lib.mkSpicetify pkgs {
-    theme = spicetify-nix.packages.themes.ziro;
+  spicedSpotify = inputs.spicetify-nix.lib.mkSpicetify pkgs {
+    theme = inputs.spicetify-nix.legacyPackages.${system}.themes.ziro;
     colorScheme = "green-dark";
   };
 in

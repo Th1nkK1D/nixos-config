@@ -23,9 +23,8 @@
       nixosConfigurations.Polygon-NX = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs; };
         modules = [
-          ./hardware-configuration.nix
           home-manager.nixosModules.home-manager
-          ./configuration.nix
+          ./configurations
         ];
       };
     };

@@ -9,7 +9,7 @@
 
 buildGoModule (finalAttrs: {
   pname = "dankcalendar";
-  version = "0.3.1";
+  version = "1.6.0";
 
   __structuredAttrs = true;
 
@@ -18,12 +18,12 @@ buildGoModule (finalAttrs: {
     repo = "dankcalendar";
     tag = "v${finalAttrs.version}";
     fetchSubmodules = true;
-    hash = "sha256-UcTWQJwkMkI1aPvkWwHITRUiqaOfP6JKlStzetkOQ88=";
+    hash = "sha256-SY0vZTjPYoTzP8JwKYvUYhn9DAod84jpsfp8Un47gkw=";
   };
 
   modRoot = "core";
 
-  vendorHash = "sha256-m0blu+mzoY4HyIBmyPV8lUirWT9oVL+PxXBupvTEM8c=";
+  vendorHash = "sha256-sCGKtWWOzARUz+whX6tDfWTYb8jIGO3o4fhndMGCm9c=";
 
   subPackages = [ "cmd/dcal" ];
 
@@ -31,20 +31,8 @@ buildGoModule (finalAttrs: {
   # releases. Untagged builds carry no UI and require an external shell dir.
   tags = [ "withshell" ];
 
-  # Mirror `make -C core sync-shell`: bake the quickshell UI into the
-  # binary, minus dev-only files. The DankCommon symlink points into the
-  # dank-qml-common submodule and would dangle after the copy, so it is
-  # replaced with the real directory.
   postPatch = ''
-    rm -rf core/internal/shellembed/dist
-    cp -r quickshell core/internal/shellembed/dist
-    rm -f core/internal/shellembed/dist/DankCommon
-    cp -r dank-qml-common/DankCommon core/internal/shellembed/dist/DankCommon
-    chmod -R u+w core/internal/shellembed/dist
-    rm -rf core/internal/shellembed/dist/scripts \
-      core/internal/shellembed/dist/.claude
-    rm -f core/internal/shellembed/dist/.qmlls.ini \
-      core/internal/shellembed/dist/translations/extract_translations.py
+    make -C core sync-shell
   '';
 
   ldflags = [

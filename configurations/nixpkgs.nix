@@ -15,12 +15,8 @@
     overlays = [
       (final: prev: {
         # Not in nixpkgs yet
+        codiff = final.callPackage ../pkgs/codiff/package.nix { };
         dankcalendar = final.callPackage ../pkgs/dankcalendar/package.nix { };
-        # CUDA build misses nvrtc, so CMake can't resolve CUDA::nvrtc
-        # Drop once https://github.com/NixOS/nixpkgs/pull/560414 lands in nixos-unstable
-        suitesparse = prev.suitesparse.overrideAttrs (old: {
-          buildInputs = old.buildInputs ++ [ prev.cudaPackages.cuda_nvrtc ];
-        });
         # Curtail shells out to `scour` for SVG, but the nixpkgs wrapper only puts
         # the JPEG/PNG/WebP tools on PATH, so SVG fails with "An unknown error has
         # occurred" (shell exit 127 swallowed by Compressor.run's catch-all)

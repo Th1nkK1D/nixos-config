@@ -12,6 +12,12 @@ let
   arkWithPackages = pkgs.ark.override { R = rWithPackages; };
   system = pkgs.stdenv.hostPlatform.system;
   llmAgents = inputs.llm-agents.packages.${system};
+  helium = inputs.helium.packages.${system}.default.override {
+    # Upstream passes this flag through a shell-expansion idiom, but
+    # wrapGAppsHook3 builds a makeBinaryWrapper that never expands it, so the
+    # browser silently falls back to XWayland and never sees the output scale.
+    flags = [ "--ozone-platform-hint=auto" ];
+  };
   spicedSpotify = inputs.spicetify-nix.lib.mkSpicetify pkgs {
     theme = inputs.spicetify-nix.legacyPackages.${system}.themes.ziro;
     colorScheme = "green-dark";
@@ -96,6 +102,7 @@ in
           grim
           grc
           gthumb
+          helium
           httpie
           hunspell
           hunspellDicts.en_US
@@ -201,18 +208,18 @@ in
           agent-browser
           ax
           claude-code
+          claude-desktop
           herdr
-          ((kandev-desktop.override {
-            kandevRuntime = (kandev.override { claudeSupport = true; }).overrideAttrs (
-              previousAttrs: {
+          (
+            (kandev-desktop.override {
+              kandevRuntime = (kandev.override { claudeSupport = true; }).overrideAttrs (previousAttrs: {
                 # Editor discovery looks for `zed`, nixpkgs only ships `zeditor`
                 postPatch = previousAttrs.postPatch + ''
                   substituteInPlace apps/backend/internal/editors/discovery/editors.json \
                     --replace-fail '"command": "zed",' '"command": "zeditor",'
                 '';
-              }
-            );
-          }).overrideAttrs
+              });
+            }).overrideAttrs
             (previousAttrs: {
               # Hide menu bar and title bar by default, no upstream toggle
               postPatch = previousAttrs.postPatch + ''

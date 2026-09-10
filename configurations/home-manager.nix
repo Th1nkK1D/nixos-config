@@ -35,6 +35,14 @@ in
             [General]
             ColorScheme=BreezeDark
           '';
+          # Helium ships no Widevine CDM and its bundle dir is read-only, so DRM
+          # sites (Netflix) fail. Its component updater reads this hint file to
+          # locate a sideloaded CDM.
+          # https://github.com/imputnet/helium/issues/116
+          ".config/net.imput.helium/WidevineCdm/latest-component-updated-widevine-cdm".text =
+            builtins.toJSON {
+              Path = "${pkgs.widevine-cdm}/share/google/chrome/WidevineCdm";
+            };
           # Missing autostart app on DMS tray workaround
           # https://github.com/AvengeMedia/DankMaterialShell/issues/1073#issuecomment-4312776159
           # After=dms.service alone is not enough: dms.service is Type=dbus on

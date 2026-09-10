@@ -9,7 +9,7 @@
 
 buildGoModule (finalAttrs: {
   pname = "dankcalendar";
-  version = "1.6.0";
+  version = "1.6.1";
 
   __structuredAttrs = true;
 
@@ -18,7 +18,7 @@ buildGoModule (finalAttrs: {
     repo = "dankcalendar";
     tag = "v${finalAttrs.version}";
     fetchSubmodules = true;
-    hash = "sha256-SY0vZTjPYoTzP8JwKYvUYhn9DAod84jpsfp8Un47gkw=";
+    hash = "sha256-Gaa6FkFLuX4g2oivHypbs6f8zf9wRWny5sAIndNDj7A=";
   };
 
   modRoot = "core";

@@ -17,6 +17,7 @@
         # Not in nixpkgs yet
         codiff = final.callPackage ../pkgs/codiff/package.nix { };
         dankcalendar = final.callPackage ../pkgs/dankcalendar/package.nix { };
+        strata = final.callPackage ../pkgs/strata/package.nix { };
         # Curtail shells out to `scour` for SVG, but the nixpkgs wrapper only puts
         # the JPEG/PNG/WebP tools on PATH, so SVG fails with "An unknown error has
         # occurred" (shell exit 127 swallowed by Compressor.run's catch-all)

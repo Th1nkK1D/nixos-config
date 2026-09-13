@@ -135,7 +135,7 @@ in
             }
           ))
           micro
-          nautilus
+          # nautilus
           nginx-language-server
           nil
           nixd
@@ -176,6 +176,7 @@ in
           skills
           slack
           spicedSpotify
+          strata
           uv
           # Patch Vesktop desktop entry for firejail wrap
           (pkgs.makeDesktopItem {

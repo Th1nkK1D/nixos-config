@@ -39,7 +39,10 @@
       enable = true;
       allowOrigin = "*";
     };
-    ollama.enable = true;
+    ollama = {
+      enable = true;
+      package = pkgs.ollama-cuda;
+    };
     openssh = {
       enable = true;
       openFirewall = false;

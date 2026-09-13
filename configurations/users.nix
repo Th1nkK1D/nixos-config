@@ -19,8 +19,8 @@ let
     flags = [ "--ozone-platform-hint=auto" ];
   };
   spicedSpotify = inputs.spicetify-nix.lib.mkSpicetify pkgs {
-    theme = inputs.spicetify-nix.legacyPackages.${system}.themes.ziro;
-    colorScheme = "green-dark";
+    theme = inputs.spicetify-nix.legacyPackages.${system}.themes.sleek;
+    colorScheme = "Greener";
   };
   zenBrowser = inputs.zen-browser.packages.${system}.default;
 in
@@ -112,7 +112,6 @@ in
           inetutils
           jdk
           jq
-          kamal
           kdePackages.qtdeclarative
           keybase-gui
           kooha
@@ -135,7 +134,6 @@ in
             }
           ))
           micro
-          # nautilus
           nginx-language-server
           nil
           nixd
@@ -209,7 +207,7 @@ in
           agent-browser
           ax
           claude-code
-          claude-desktop
+          (claude-desktop.override { commandLineArgs = "--password-store=gnome-libsecret"; })
           herdr
           (
             (kandev-desktop.override {
@@ -221,15 +219,15 @@ in
                 '';
               });
             }).overrideAttrs
-            (previousAttrs: {
-              # Hide menu bar and title bar by default, no upstream toggle
-              postPatch = previousAttrs.postPatch + ''
-                substituteInPlace apps/desktop/src-tauri/src/main.rs \
-                  --replace-fail '.menu(build_menu)' ""
-                substituteInPlace apps/desktop/src-tauri/tauri.conf.json \
-                  --replace-fail '"resizable": true,' '"resizable": true, "decorations": false,'
-              '';
-            })
+              (previousAttrs: {
+                # Hide menu bar and title bar by default, no upstream toggle
+                postPatch = previousAttrs.postPatch + ''
+                  substituteInPlace apps/desktop/src-tauri/src/main.rs \
+                    --replace-fail '.menu(build_menu)' ""
+                  substituteInPlace apps/desktop/src-tauri/tauri.conf.json \
+                    --replace-fail '"resizable": true,' '"resizable": true, "decorations": false,'
+                '';
+              })
           )
           mindwalk
           # (pi.overrideAttrs (

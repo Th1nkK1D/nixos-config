@@ -33,16 +33,16 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "strata";
-  version = "0.16.0";
+  version = "0.18.0";
 
   src = fetchFromGitHub {
     owner = "lgse";
     repo = "strata";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-/Blv1jvfZf+OEfH9K0SLVFlVR+jIhMwS4gBe1yHnX2Y=";
+    hash = "sha256-ws/lAr8UmQ9peXVXc+AiPsnlKvNT90Ea0Sy4uDEddww=";
   };
 
-  cargoHash = "sha256-vFp1qIoCC0mqbJ5FpXZmRbhp9XEB+WQjE653+W6m+Uo=";
+  cargoHash = "sha256-R7LK3CZSKOmI1+VZAX1qOf9vQhcz1u1Zo9lqX4iVm4g=";
 
   # The preview sandbox is written for an FHS host: it binds /usr, sets the
   # helper PATH to /usr/bin, and runs /usr/bin/{prlimit,ffmpegthumbnailer}.
@@ -69,6 +69,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
     fontconfig
     gdk-pixbuf
     glib
+    gst_all_1.gstreamer
+    gst_all_1.gst-plugins-base
     gtk4
     gtksourceview5
     pango
@@ -89,6 +91,16 @@ rustPlatform.buildRustPackage (finalAttrs: {
       $out/share/dbus-1/services/io.github.lgse.Strata.FileManager1.service
     substituteInPlace $out/share/dbus-1/services/io.github.lgse.Strata.FileManager1.service \
       --replace-fail /usr/bin/strata $out/bin/strata
+
+    # Portal backend for org.freedesktop.impl.portal.FileChooser. Upstream
+    # installs this per-user from the app; on NixOS it belongs in the package so
+    # xdg.portal.extraPortals can pick it up
+    install -Dm644 data/portal/strata.portal \
+      $out/share/xdg-desktop-portal/portals/strata.portal
+    install -Dm644 data/portal/org.freedesktop.impl.portal.desktop.strata.service.in \
+      $out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.strata.service
+    substituteInPlace $out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.strata.service \
+      --replace-fail @STRATA_EXECUTABLE@ $out/bin/strata
 
     # Marks the install as package-managed so the in-app updater stops offering
     # to overwrite the read-only store path

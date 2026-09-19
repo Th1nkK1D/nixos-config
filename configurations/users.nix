@@ -141,6 +141,7 @@ in
           nodejs_24
           nvidia-container-toolkit
           obsidian
+          open-pencil
           ouch
           packet
           papers

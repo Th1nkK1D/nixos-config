@@ -29,31 +29,33 @@ let
     imagemagick
     libraw
     ffmpeg
+    ffmpegthumbnailer
   ];
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "strata";
-  version = "0.18.0";
+  version = "0.19.0";
 
   src = fetchFromGitHub {
     owner = "lgse";
     repo = "strata";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-ws/lAr8UmQ9peXVXc+AiPsnlKvNT90Ea0Sy4uDEddww=";
+    hash = "sha256-1CJrBJx6ecQRkkv2v5nyepNwG3bKeNcw4nf0e4V3y50=";
   };
 
-  cargoHash = "sha256-R7LK3CZSKOmI1+VZAX1qOf9vQhcz1u1Zo9lqX4iVm4g=";
+  cargoHash = "sha256-kH0G6atmfKAc0GgG+Rqv3waSljLVE/z7saq066wmRBw=";
 
   # The preview sandbox is written for an FHS host: it binds /usr, sets the
-  # helper PATH to /usr/bin, and runs /usr/bin/{prlimit,ffmpegthumbnailer}.
-  # Point all of that at the store, and hand gdk-pixbuf its loader cache since
-  # bwrap clears the environment.
+  # helper PATH to /usr/bin, and runs /usr/bin/prlimit. Point all of that at
+  # the store, and hand gdk-pixbuf its loader cache since bwrap clears the
+  # environment. bwrap is looked up in fixed system dirs rather than PATH, so
+  # pin it to the store too
   postPatch = ''
     substituteInPlace src/sandbox.rs \
       --replace-fail '"/usr/bin",' '"${sandboxPath}", "--setenv", "GDK_PIXBUF_MODULE_FILE", "${gdk-pixbuf}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache",' \
       --replace-fail '"/usr",' '"/nix/store",' \
       --replace-fail '.arg("/usr/bin/prlimit")' '.arg("${lib.getExe' util-linux "prlimit"}")' \
-      --replace-fail '"/usr/bin/ffmpegthumbnailer"' '"${lib.getExe ffmpegthumbnailer}"'
+      --replace-fail 'crate::trusted_command::resolve("bwrap")' 'Ok::<_, String>(std::path::PathBuf::from("${lib.getExe bubblewrap}"))'
   '';
 
   env.STRATA_BUILD_COMMIT = finalAttrs.src.rev;
@@ -110,16 +112,11 @@ rustPlatform.buildRustPackage (finalAttrs: {
     EOF
   '';
 
-  # The preview sandbox shells out to bwrap, "Open terminal here" to
-  # xdg-terminal-exec; GStreamer plays the helper's raw audio frames
+  # "Open terminal here" shells out to xdg-terminal-exec; GStreamer plays the
+  # helper's raw audio frames
   preFixup = ''
     gappsWrapperArgs+=(
-      --prefix PATH : "${
-        lib.makeBinPath [
-          bubblewrap
-          xdg-terminal-exec
-        ]
-      }"
+      --prefix PATH : "${lib.makeBinPath [ xdg-terminal-exec ]}"
       --prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${
         lib.makeSearchPath "lib/gstreamer-1.0" (
           with gst_all_1;

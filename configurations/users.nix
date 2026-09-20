@@ -231,15 +231,16 @@ in
               })
           )
           mindwalk
-          # (pi.overrideAttrs (
-          #   finalAttrs: previousAttrs: {
-          #     # Save npm extension in pi agent folder instead of global
-          #     postFixup = ''
-          #       wrapProgram $out/bin/pi \
-          #         --set NPM_CONFIG_PREFIX "/home/lkz/.pi/agent/.npm/" \
-          #     '';
-          #   }
-          # ))
+          open-code-review
+          (pi.overrideAttrs (
+            finalAttrs: previousAttrs: {
+              # Save npm extension in pi agent folder instead of global
+              postFixup = ''
+                wrapProgram $out/bin/pi \
+                  --set NPM_CONFIG_PREFIX "/home/lkz/.pi/agent/.npm/" \
+              '';
+            }
+          ))
           rtk
         ]);
     };

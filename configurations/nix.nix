@@ -13,6 +13,8 @@
       download-attempts = 10;
       stalled-download-timeout = 120;
       connect-timeout = 15;
+      max-jobs = 2;
+      cores = 6;
       substituters = [
         "https://cache.nixos-cuda.org"
         "https://cache.numtide.com"

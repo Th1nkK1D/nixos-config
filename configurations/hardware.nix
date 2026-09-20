@@ -33,4 +33,6 @@
     };
     nvidia-container-toolkit.enable = true;
   };
+
+  zramSwap.enable = true;
 }

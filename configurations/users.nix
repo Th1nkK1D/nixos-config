@@ -22,7 +22,6 @@ let
     theme = inputs.spicetify-nix.legacyPackages.${system}.themes.sleek;
     colorScheme = "Greener";
   };
-  zenBrowser = inputs.zen-browser.packages.${system}.default;
 in
 {
   environment.sessionVariables.JUPYTER_PATH = pkgs.jupyter-kernel.create {
@@ -200,7 +199,6 @@ in
           wl-mirror
           xwayland-satellite
           zed-editor
-          zenBrowser
           zoom-us
           zotero
         ]

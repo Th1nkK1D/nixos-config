@@ -7,7 +7,7 @@
       allowUnfree = true;
       android_sdk.accept_license = true;
       permittedInsecurePackages = [
-        "beekeeper-studio-6.0.5"
+        "beekeeper-studio-6.1.1"
         "keybase-gui-6.5.1"
       ];
     };

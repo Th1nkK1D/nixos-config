@@ -20,7 +20,7 @@
       cozette
       ibm-plex
       iosevka
-      ioskeley-mono.condensed-unhinted
+      (ioskeley-mono.override { width = "SemiCondensed"; }).standard
       nerd-fonts."m+"
       noto-fonts
       noto-fonts-color-emoji

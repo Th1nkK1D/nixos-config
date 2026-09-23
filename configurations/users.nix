@@ -66,7 +66,6 @@ in
           arkWithPackages
           authenticator
           bat
-          beekeeper-studio
           beeper
           blanket
           bruno
@@ -175,6 +174,7 @@ in
           slack
           spicedSpotify
           strata
+          tabularis
           uv
           # Patch Vesktop desktop entry for firejail wrap
           (pkgs.makeDesktopItem {

@@ -23,7 +23,6 @@
       (ioskeley-mono.override { width = "SemiCondensed"; }).standard
       nerd-fonts."m+"
       noto-fonts
-      noto-fonts-color-emoji
       sarabun-font
     ];
   };

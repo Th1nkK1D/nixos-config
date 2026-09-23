@@ -5,8 +5,7 @@
     dsearch.enable = true;
     dms-shell = {
       enable = true;
-      enableDynamicTheming = false;
-      enableCalendarEvents = false;
+      excludePackages = with pkgs; [ matugen ];
       systemd.enable = true;
     };
     firejail = {

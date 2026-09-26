@@ -228,8 +228,8 @@ in
                 '';
               })
           )
-          mindwalk
           open-code-review
+          orca
           (pi.overrideAttrs (
             finalAttrs: previousAttrs: {
               # Save npm extension in pi agent folder instead of global

@@ -34,16 +34,16 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "strata";
-  version = "0.19.0";
+  version = "0.20.1";
 
   src = fetchFromGitHub {
     owner = "lgse";
     repo = "strata";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-1CJrBJx6ecQRkkv2v5nyepNwG3bKeNcw4nf0e4V3y50=";
+    hash = "sha256-uAMpUXgcoqejW6acuMbzCEbO8NNFsqlbQf6XP7hMwWY=";
   };
 
-  cargoHash = "sha256-kH0G6atmfKAc0GgG+Rqv3waSljLVE/z7saq066wmRBw=";
+  cargoHash = "sha256-XA6rV+BRj1XG3LlGBBVMUXjnhR1E5FUoL4oT78XazmA=";
 
   # The preview sandbox is written for an FHS host: it binds /usr, sets the
   # helper PATH to /usr/bin, and runs /usr/bin/prlimit. Point all of that at

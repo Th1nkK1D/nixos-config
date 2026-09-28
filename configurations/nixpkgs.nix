@@ -14,7 +14,6 @@
       (final: prev: {
         # Not in nixpkgs yet
         codiff = final.callPackage ../pkgs/codiff/package.nix { };
-        dankcalendar = final.callPackage ../pkgs/dankcalendar/package.nix { };
         open-pencil = final.callPackage ../pkgs/open-pencil/package.nix { };
         strata = final.callPackage ../pkgs/strata/package.nix { };
         # Curtail shells out to `scour` for SVG, but the nixpkgs wrapper only puts

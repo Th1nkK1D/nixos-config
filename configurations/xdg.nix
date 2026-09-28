@@ -7,12 +7,12 @@
       xdg-desktop-portal-gnome
       xdg-desktop-portal-gtk
     ];
-    config.common = {
-      default = [
+    config = {
+      common.default = [
         "gnome"
         "gtk"
       ];
-      "org.freedesktop.impl.portal.FileChooser" = [ "strata" ];
+      niri."org.freedesktop.impl.portal.FileChooser" = [ "strata" ];
     };
   };
 }

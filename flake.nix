@@ -19,6 +19,10 @@
   outputs =
     { nixpkgs, home-manager, ... }@inputs:
     {
+      packages.x86_64-linux = builtins.mapAttrs (
+        name: _: nixpkgs.legacyPackages.x86_64-linux.callPackage ./pkgs/${name}/package.nix { }
+      ) (builtins.readDir ./pkgs);
+
       nixosConfigurations.Polygon-NX = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs; };
         modules = [

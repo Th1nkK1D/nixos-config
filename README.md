@@ -12,10 +12,13 @@ My NixOS configuration, plus a few packages that aren't in nixpkgs yet.
 
 All packages are `x86_64-linux` only. There is no binary cache, so Nix builds them on your machine.
 
+Strata is unfree: its RAR extraction compiles in RARLAB's UnRAR code, whose license isn't free software ([lgse/strata#1327](https://github.com/lgse/strata/issues/1327)). You need to allow unfree packages to use it.
+
 ### Try one
 
 ```sh
-nix run github:Th1nkK1D/nixos-config#strata
+nix run github:Th1nkK1D/nixos-config#codiff
+NIXPKGS_ALLOW_UNFREE=1 nix run --impure github:Th1nkK1D/nixos-config#strata
 ```
 
 ### Add to your flake
@@ -38,9 +41,11 @@ nix run github:Th1nkK1D/nixos-config#strata
           (
             { pkgs, ... }:
             {
-              environment.systemPackages = [
-                th1nkk1d.packages.${pkgs.stdenv.hostPlatform.system}.strata
-              ];
+              nixpkgs = {
+                overlays = [ th1nkk1d.overlays.default ];
+                config.allowUnfree = true; # for strata
+              };
+              environment.systemPackages = [ pkgs.strata ];
             }
           )
         ];
@@ -49,24 +54,21 @@ nix run github:Th1nkK1D/nixos-config#strata
 }
 ```
 
-With `inputs.nixpkgs.follows`, the packages build against your nixpkgs instead of the one pinned here.
+The overlay builds the packages inside your nixpkgs, so your `nixpkgs.config` (including `allowUnfree`) applies. `packages.<system>.<name>` outputs also exist, but they use a default nixpkgs config, so Strata from there needs `NIXPKGS_ALLOW_UNFREE=1` and `--impure`.
 
 ### Strata as the system file manager
 
-The Strata package ships an XDG portal backend and an `org.freedesktop.FileManager1` D-Bus service. To use Strata for Open/Save dialogs, opening folders, and "Show in folder", use this as the inline module in the flake above (see also [`configurations/xdg.nix`](configurations/xdg.nix)):
+The Strata package ships an XDG portal backend and an `org.freedesktop.FileManager1` D-Bus service. To use Strata for Open/Save dialogs, opening folders, and "Show in folder", add this to the module in the flake above (see also [`configurations/xdg.nix`](configurations/xdg.nix)):
 
 ```nix
 { pkgs, ... }:
-let
-  strata = th1nkk1d.packages.${pkgs.stdenv.hostPlatform.system}.strata;
-in
 {
-  environment.systemPackages = [ strata ];
+  environment.systemPackages = [ pkgs.strata ];
   xdg = {
     mime.defaultApplications."inode/directory" = "io.github.lgse.Strata.desktop";
     portal = {
       enable = true;
-      extraPortals = [ strata ];
+      extraPortals = [ pkgs.strata ];
       # Use your desktop's name: xdg-desktop-portal reads <desktop>-portals.conf
       # (XDG_CURRENT_DESKTOP) instead of portals.conf when it exists
       config.niri."org.freedesktop.impl.portal.FileChooser" = [ "strata" ];

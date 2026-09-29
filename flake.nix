@@ -17,11 +17,20 @@
   };
 
   outputs =
-    { nixpkgs, home-manager, ... }@inputs:
     {
-      packages.x86_64-linux = builtins.mapAttrs (
-        name: _: nixpkgs.legacyPackages.x86_64-linux.callPackage ./pkgs/${name}/package.nix { }
-      ) (builtins.readDir ./pkgs);
+      self,
+      nixpkgs,
+      home-manager,
+      ...
+    }@inputs:
+    {
+      overlays.default =
+        final: _:
+        builtins.mapAttrs (name: _: final.callPackage ./pkgs/${name}/package.nix { }) (
+          builtins.readDir ./pkgs
+        );
+
+      packages.x86_64-linux = self.overlays.default nixpkgs.legacyPackages.x86_64-linux { };
 
       nixosConfigurations.Polygon-NX = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs; };

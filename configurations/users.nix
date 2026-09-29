@@ -146,6 +146,7 @@ in
           parallel
           pdfarranger
           pnpm
+          psmisc
           (python3.withPackages (
             ps: with ps; [
               ipykernel

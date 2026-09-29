@@ -23,6 +23,7 @@
       };
     };
     gnome-disks.enable = true;
+    gpu-screen-recorder.enable = true;
     kdeconnect.enable = true;
     nh = {
       enable = true;

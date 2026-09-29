@@ -19,6 +19,7 @@
   libraw,
   pango,
   poppler,
+  squashfs-tools,
   util-linux,
   xdg-terminal-exec,
 }:
@@ -30,6 +31,8 @@ let
     libraw
     ffmpeg
     ffmpegthumbnailer
+    squashfs-tools
+    util-linux
   ];
 in
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -48,14 +51,15 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # The preview sandbox is written for an FHS host: it binds /usr, sets the
   # helper PATH to /usr/bin, and runs /usr/bin/prlimit. Point all of that at
   # the store, and hand gdk-pixbuf its loader cache since bwrap clears the
-  # environment. bwrap is looked up in fixed system dirs rather than PATH, so
-  # pin it to the store too
+  # environment. bwrap is looked up in fixed system dirs rather than PATH (by
+  # the preview, thumbnail, and media sandboxes), so add its store dir there
   postPatch = ''
     substituteInPlace src/sandbox.rs \
-      --replace-fail '"/usr/bin",' '"${sandboxPath}", "--setenv", "GDK_PIXBUF_MODULE_FILE", "${gdk-pixbuf}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache",' \
+      --replace-fail '"/usr/bin",' '"${sandboxPath}", "--setenv", "GDK_PIXBUF_MODULE_FILE", "${gdk-pixbuf}/${gdk-pixbuf.binaryDir}/loaders.cache",' \
       --replace-fail '"/usr",' '"/nix/store",' \
-      --replace-fail '.arg("/usr/bin/prlimit")' '.arg("${lib.getExe' util-linux "prlimit"}")' \
-      --replace-fail 'crate::trusted_command::resolve("bwrap")' 'Ok::<_, String>(std::path::PathBuf::from("${lib.getExe bubblewrap}"))'
+      --replace-fail '.arg("/usr/bin/prlimit")' '.arg("${lib.getExe' util-linux "prlimit"}")'
+    substituteInPlace src/trusted_command.rs \
+      --replace-fail '"/run/current-system/sw/bin",' '"/run/current-system/sw/bin", "${bubblewrap}/bin",'
   '';
 
   env.STRATA_BUILD_COMMIT = finalAttrs.src.rev;
@@ -73,6 +77,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
     glib
     gst_all_1.gstreamer
     gst_all_1.gst-plugins-base
+    gst_all_1.gst-plugins-good
+    gst_all_1.gst-libav
     gtk4
     gtksourceview5
     pango
@@ -112,23 +118,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
     EOF
   '';
 
-  # "Open terminal here" shells out to xdg-terminal-exec; GStreamer plays the
-  # helper's raw audio frames
+  # "Open terminal here" shells out to xdg-terminal-exec
   preFixup = ''
-    gappsWrapperArgs+=(
-      --prefix PATH : "${lib.makeBinPath [ xdg-terminal-exec ]}"
-      --prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${
-        lib.makeSearchPath "lib/gstreamer-1.0" (
-          with gst_all_1;
-          [
-            gstreamer
-            gst-plugins-base
-            gst-plugins-good
-            gst-libav
-          ]
-        )
-      }"
-    )
+    gappsWrapperArgs+=(--prefix PATH : "${lib.makeBinPath [ xdg-terminal-exec ]}")
   '';
 
   passthru.updateScript = nix-update-script { };

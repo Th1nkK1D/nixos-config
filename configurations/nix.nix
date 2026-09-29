@@ -2,7 +2,6 @@
 {
   nix = {
     channel.enable = false;
-    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     # Make `nix-shell -p`, `nix run nixpkgs#...` and <nixpkgs> resolve to the flake's pinned nixpkgs
     registry.nixpkgs.flake = inputs.nixpkgs;
     settings = {
@@ -15,6 +14,7 @@
       connect-timeout = 15;
       max-jobs = 2;
       cores = 6;
+      nix-path = [ "nixpkgs=${inputs.nixpkgs}" ];
       substituters = [
         "https://cache.nixos-cuda.org"
         "https://cache.numtide.com"

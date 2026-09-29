@@ -12,7 +12,10 @@
           "IBM Plex Sans Thai Looped"
           "IBM Plex Sans"
         ];
-        monospace = [ "IBM Plex Mono" ];
+        monospace = [
+          "IBM Plex Mono"
+          "IBM Plex Sans Thai Looped"
+        ];
       };
     };
     fontDir.enable = true;

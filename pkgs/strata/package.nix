@@ -112,10 +112,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
     # Marks the install as package-managed so the in-app updater stops offering
     # to overwrite the read-only store path
-    install -Dm644 /dev/stdin $out/share/strata/install-source.toml <<EOF
-    manager = "Nix"
-    update_command = "nixos-rebuild switch"
-    EOF
+    echo 'manager = "Nix"' | install -Dm644 /dev/stdin $out/share/strata/install-source.toml
   '';
 
   # "Open terminal here" shells out to xdg-terminal-exec
@@ -129,7 +126,12 @@ rustPlatform.buildRustPackage (finalAttrs: {
     description = "Fast, keyboard-first file manager for modern Linux desktops";
     homepage = "https://github.com/lgse/strata";
     changelog = "https://github.com/lgse/strata/releases/tag/v${finalAttrs.version}";
-    license = lib.licenses.mit;
+    license = with lib.licenses; [
+      mit
+      # RAR extraction compiles in RARLAB's UnRAR source (unrar_sys crate)
+      # https://github.com/lgse/strata/issues/1327
+      unfreeRedistributable
+    ];
     maintainers = [ lib.maintainers.th1nkk1d ];
     mainProgram = "strata";
     platforms = lib.platforms.linux;

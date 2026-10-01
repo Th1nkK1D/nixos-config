@@ -30,7 +30,11 @@
           builtins.readDir ./pkgs
         );
 
-      packages.x86_64-linux = self.overlays.default nixpkgs.legacyPackages.x86_64-linux { };
+      packages.x86_64-linux =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux.extend self.overlays.default;
+        in
+        builtins.mapAttrs (name: _: pkgs.${name}) (builtins.readDir ./pkgs);
 
       nixosConfigurations.Polygon-NX = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs; };

@@ -139,7 +139,8 @@ in
           nodejs_24
           nvidia-container-toolkit
           obsidian
-          open-pencil
+          open-pencil-cli
+          open-pencil-desktop
           ouch
           packet
           papers

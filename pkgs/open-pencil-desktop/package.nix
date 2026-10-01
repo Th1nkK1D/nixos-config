@@ -15,10 +15,11 @@
   gtk3,
   libsoup_3,
   webkitgtk_4_1,
+  open-pencil-mcp,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  pname = "open-pencil";
+  pname = "open-pencil-desktop";
   version = "0.15.1";
 
   src = fetchurl {
@@ -52,6 +53,10 @@ stdenv.mkDerivation (finalAttrs: {
       --replace-fail "Categories=" "Categories=Graphics;VectorGraphics;"
 
     runHook postInstall
+  '';
+
+  preFixup = ''
+    gappsWrapperArgs+=(--prefix PATH : ${lib.makeBinPath [ open-pencil-mcp ]})
   '';
 
   passthru.updateScript = nix-update-script { };

@@ -7,7 +7,9 @@ My NixOS configuration, plus a few packages that aren't in nixpkgs yet.
 | Package | Description |
 | --- | --- |
 | [codiff](https://github.com/nkzw-tech/codiff) | Minimal local diff viewer for reviewing and committing Git changes |
-| [open-pencil](https://openpencil.dev) | Open-source design editor for .fig and .pen files with built-in AI |
+| [open-pencil-cli](https://openpencil.dev/programmable/cli/inspecting) | Inspect, analyze, script, and export .fig and .pen files from the terminal |
+| [open-pencil-desktop](https://openpencil.dev) | Open-source design editor for .fig and .pen files with built-in AI, with its MCP server on PATH |
+| [open-pencil-mcp](https://github.com/open-pencil/open-pencil/tree/main/packages/mcp) | MCP server for OpenPencil desktop automation |
 | [strata](https://github.com/lgse/strata) | Fast, keyboard-first file manager for modern Linux desktops |
 
 All packages are `x86_64-linux` only. There is no binary cache, so Nix builds them on your machine.

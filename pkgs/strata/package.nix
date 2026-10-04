@@ -22,6 +22,8 @@
   squashfs-tools,
   util-linux,
   xdg-terminal-exec,
+  # RAR extraction and CBR covers compile in RARLAB's non-free UnRAR source
+  enableUnfree ? false,
 }:
 
 let
@@ -37,32 +39,36 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "strata";
-  version = "0.20.1";
+  version = "0.21.0";
 
   src = fetchFromGitHub {
     owner = "lgse";
     repo = "strata";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-uAMpUXgcoqejW6acuMbzCEbO8NNFsqlbQf6XP7hMwWY=";
+    hash = "sha256-RSTEgtfDYYGxXef1J22NMGpmgjObg3T6APZqfSyfNPY=";
   };
 
-  cargoHash = "sha256-XA6rV+BRj1XG3LlGBBVMUXjnhR1E5FUoL4oT78XazmA=";
+  cargoHash = "sha256-0nMfswOfyXiwIWF0Xne61jGwPdU/gMo6Wt6JGZEfrJw=";
 
-  # The preview sandbox is written for an FHS host: it binds /usr, sets the
-  # helper PATH to /usr/bin, and runs /usr/bin/prlimit. Point all of that at
-  # the store, and hand gdk-pixbuf its loader cache since bwrap clears the
-  # environment. bwrap is looked up in fixed system dirs rather than PATH (by
-  # the preview, thumbnail, and media sandboxes), so add its store dir there
+  buildNoDefaultFeatures = !enableUnfree;
+
+  # bwrap is looked up in fixed system dirs rather than PATH, so add its store
+  # dir there. The STRATA_SANDBOX_* build vars deliberately don't cover this
+  # lookup (docs/preview-sandbox.md)
   postPatch = ''
-    substituteInPlace src/sandbox.rs \
-      --replace-fail '"/usr/bin",' '"${sandboxPath}", "--setenv", "GDK_PIXBUF_MODULE_FILE", "${gdk-pixbuf}/${gdk-pixbuf.binaryDir}/loaders.cache",' \
-      --replace-fail '"/usr",' '"/nix/store",' \
-      --replace-fail '.arg("/usr/bin/prlimit")' '.arg("${lib.getExe' util-linux "prlimit"}")'
     substituteInPlace src/trusted_command.rs \
       --replace-fail '"/run/current-system/sw/bin",' '"/run/current-system/sw/bin", "${bubblewrap}/bin",'
   '';
 
-  env.STRATA_BUILD_COMMIT = finalAttrs.src.rev;
+  # The preview sandbox defaults to an FHS host (/usr bind, /usr/bin PATH,
+  # /usr/bin/prlimit) and bwrap clears the environment, so point it at the store
+  env = {
+    STRATA_BUILD_COMMIT = finalAttrs.src.rev;
+    STRATA_SANDBOX_PATH = sandboxPath;
+    STRATA_SANDBOX_ROOT = "/nix/store";
+    STRATA_SANDBOX_PRLIMIT = lib.getExe' util-linux "prlimit";
+    STRATA_SANDBOX_GDK_PIXBUF_MODULE_FILE = "${gdk-pixbuf}/${gdk-pixbuf.binaryDir}/loaders.cache";
+  };
 
   nativeBuildInputs = [
     pkg-config
@@ -126,12 +132,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     description = "Fast, keyboard-first file manager for modern Linux desktops";
     homepage = "https://github.com/lgse/strata";
     changelog = "https://github.com/lgse/strata/releases/tag/v${finalAttrs.version}";
-    license = with lib.licenses; [
-      mit
-      # RAR extraction compiles in RARLAB's UnRAR source (unrar_sys crate)
-      # https://github.com/lgse/strata/issues/1327
-      unfreeRedistributable
-    ];
+    license = with lib.licenses; [ mit ] ++ lib.optionals enableUnfree [ unfreeRedistributable ];
     maintainers = [ lib.maintainers.th1nkk1d ];
     mainProgram = "strata";
     platforms = lib.platforms.linux;

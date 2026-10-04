@@ -22,6 +22,7 @@
             makeWrapperArgs+=("--prefix" "PATH" ":" "${lib.makeBinPath [ prev.scour ]}")
           '';
         });
+        strata = prev.strata.override { enableUnfree = true; };
         # The desktop entry hardcodes --gtk-single-instance=true, so arguments from
         # xdg-terminal-exec (e.g. Strata's "Open terminal here") were ignores.
         # symlinkJoin instead of overrideAttrs to avoid rebuilding ghostty.

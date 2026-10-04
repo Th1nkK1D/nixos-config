@@ -12,6 +12,23 @@ let
   arkWithPackages = pkgs.ark.override { R = rWithPackages; };
   system = pkgs.stdenv.hostPlatform.system;
   llmAgents = inputs.llm-agents.packages.${system};
+  # llm-agents built against our nixpkgs (no binary cache), for packages whose
+  # FHS env must share the host's glibc: /run/opengl-driver's Mesa is built
+  # against our nixpkgs, and llm-agents' pin can lag behind. Upstream still uses
+  # the X11 aliases our allowAliases = false removes
+  llmAgentsHost =
+    (pkgs.appendOverlays [
+      (final: _: {
+        libX11 = final.libx11;
+        libXcomposite = final.libxcomposite;
+        libXcursor = final.libxcursor;
+        libXdamage = final.libxdamage;
+        libXext = final.libxext;
+        libXfixes = final.libxfixes;
+        libXrandr = final.libxrandr;
+      })
+      inputs.llm-agents.overlays.shared-nixpkgs
+    ]).llm-agents;
   helium = inputs.helium.packages.${system}.default.override {
     # Upstream passes this flag through a shell-expansion idiom, but
     # wrapGAppsHook3 builds a makeBinaryWrapper that never expands it, so the
@@ -206,7 +223,9 @@ in
           agent-browser
           ax
           claude-code
-          (claude-desktop.override { commandLineArgs = "--password-store=gnome-libsecret"; })
+          (llmAgentsHost.claude-desktop.override {
+            commandLineArgs = "--password-store=gnome-libsecret";
+          })
           herdr
           hunk
           (

@@ -72,7 +72,6 @@ in
           bun
           caddy
           chezmoi
-          chromium
           cloudflared
           codiff
           curtail
@@ -120,7 +119,6 @@ in
           libreoffice
           libsecret
           libwebp
-          lumen
           (mailspring.overrideAttrs (
             finalAttrs: previousAttrs: {
               # No full desktop environment: keyring backend can't be auto-detected
@@ -177,6 +175,7 @@ in
           spicedSpotify
           strata
           tabularis
+          ungoogled-chromium
           uv
           # Patch Vesktop desktop entry for firejail wrap
           (pkgs.makeDesktopItem {
@@ -202,7 +201,6 @@ in
           xwayland-satellite
           zed-editor
           zoom-us
-          zotero
         ]
         ++ (with llmAgents; [
           agent-browser
@@ -210,6 +208,7 @@ in
           claude-code
           (claude-desktop.override { commandLineArgs = "--password-store=gnome-libsecret"; })
           herdr
+          hunk
           (
             (kandev-desktop.override {
               kandevRuntime = (kandev.override { claudeSupport = true; }).overrideAttrs (previousAttrs: {
@@ -230,8 +229,6 @@ in
                 '';
               })
           )
-          open-code-review
-          orca
           (pi.overrideAttrs (
             finalAttrs: previousAttrs: {
               # Save npm extension in pi agent folder instead of global

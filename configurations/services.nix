@@ -41,7 +41,11 @@
     };
     ollama = {
       enable = true;
-      environmentVariables.OLLAMA_ORIGINS = "chrome-extension://*";
+      environmentVariables = {
+        OLLAMA_FLASH_ATTENTION = "1";
+        OLLAMA_NUM_PARALLEL = "2";
+        OLLAMA_ORIGINS = "chrome-extension://*";
+      };
       package = pkgs.ollama-cuda;
     };
     openssh = {

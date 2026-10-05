@@ -52,6 +52,30 @@ stdenv.mkDerivation (finalAttrs: {
     substituteInPlace $out/share/applications/OpenPencil.desktop \
       --replace-fail "Categories=" "Categories=Graphics;VectorGraphics;"
 
+    # The desktop entry claims these types but the deb never defines them, so
+    # *.fig resolves to XFig. Magic tells Figma apart: raw files start with
+    # fig-kiwi, exports are zips whose first entry is canvas.fig (outranking
+    # the generic zip magic at 60)
+    install -Dm644 /dev/stdin $out/share/mime/packages/open-pencil.xml <<'EOF'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+      <mime-type type="application/x-figma">
+        <comment>Figma design</comment>
+        <glob pattern="*.fig"/>
+        <magic priority="70">
+          <match type="string" value="fig-kiwi" offset="0"/>
+          <match type="string" value="PK\003\004" offset="0">
+            <match type="string" value="canvas.fig" offset="30"/>
+          </match>
+        </magic>
+      </mime-type>
+      <mime-type type="application/x-pencil-pen">
+        <comment>OpenPencil design</comment>
+        <glob pattern="*.pen"/>
+      </mime-type>
+    </mime-info>
+    EOF
+
     runHook postInstall
   '';
 

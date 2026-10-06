@@ -44,7 +44,7 @@
       environmentVariables = {
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_NUM_PARALLEL = "2";
-        OLLAMA_ORIGINS = "chrome-extension://*";
+        OLLAMA_ORIGINS = "chrome-extension://*,moz-extension://*";
       };
       package = pkgs.ollama-cuda;
     };

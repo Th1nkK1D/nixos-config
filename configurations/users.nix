@@ -222,32 +222,14 @@ in
         ++ (with llmAgents; [
           agent-browser
           ax
+          claude-agent-acp
           claude-code
           (llmAgentsHost.claude-desktop.override {
             commandLineArgs = "--password-store=gnome-libsecret";
           })
           herdr
           hunk
-          (
-            (kandev-desktop.override {
-              kandevRuntime = (kandev.override { claudeSupport = true; }).overrideAttrs (previousAttrs: {
-                # Editor discovery looks for `zed`, nixpkgs only ships `zeditor`
-                postPatch = previousAttrs.postPatch + ''
-                  substituteInPlace apps/backend/internal/editors/discovery/editors.json \
-                    --replace-fail '"command": "zed",' '"command": "zeditor",'
-                '';
-              });
-            }).overrideAttrs
-              (previousAttrs: {
-                # Hide menu bar and title bar by default, no upstream toggle
-                postPatch = previousAttrs.postPatch + ''
-                  substituteInPlace apps/desktop/src-tauri/src/main.rs \
-                    --replace-fail '.menu(build_menu)' ""
-                  substituteInPlace apps/desktop/src-tauri/tauri.conf.json \
-                    --replace-fail '"resizable": true,' '"resizable": true, "decorations": false,'
-                '';
-              })
-          )
+          nono
           (pi.overrideAttrs (
             finalAttrs: previousAttrs: {
               # Save npm extension in pi agent folder instead of global

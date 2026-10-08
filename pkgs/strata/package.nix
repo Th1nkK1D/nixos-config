@@ -17,11 +17,13 @@
   gtksourceview5,
   imagemagick,
   libraw,
+  librsvg,
   pango,
   poppler,
   squashfs-tools,
   util-linux,
   xdg-terminal-exec,
+  xdg-utils,
   # RAR extraction and CBR covers compile in RARLAB's non-free UnRAR source
   enableUnfree ? false,
 }:
@@ -52,22 +54,23 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   buildNoDefaultFeatures = !enableUnfree;
 
-  # bwrap is looked up in fixed system dirs rather than PATH, so add its store
-  # dir there. The STRATA_SANDBOX_* build vars deliberately don't cover this
-  # lookup (docs/preview-sandbox.md)
+  # bwrap and xdg-mime are looked up in fixed system dirs rather than PATH, so
+  # add their store dirs there. The STRATA_SANDBOX_* build vars deliberately
+  # don't cover this lookup (docs/preview-sandbox.md)
   postPatch = ''
     substituteInPlace src/trusted_command.rs \
-      --replace-fail '"/run/current-system/sw/bin",' '"/run/current-system/sw/bin", "${bubblewrap}/bin",'
+      --replace-fail '"/run/current-system/sw/bin",' '"/run/current-system/sw/bin", "${bubblewrap}/bin", "${xdg-utils}/bin",'
   '';
 
   # The preview sandbox defaults to an FHS host (/usr bind, /usr/bin PATH,
   # /usr/bin/prlimit) and bwrap clears the environment, so point it at the store
   env = {
-    STRATA_BUILD_COMMIT = finalAttrs.src.rev;
+    STRATA_BUILD_COMMIT = finalAttrs.src.tag;
     STRATA_SANDBOX_PATH = sandboxPath;
     STRATA_SANDBOX_ROOT = "/nix/store";
     STRATA_SANDBOX_PRLIMIT = lib.getExe' util-linux "prlimit";
-    STRATA_SANDBOX_GDK_PIXBUF_MODULE_FILE = "${gdk-pixbuf}/${gdk-pixbuf.binaryDir}/loaders.cache";
+    # librsvg's cache also lists gdk-pixbuf's own loaders, plus SVG
+    STRATA_SANDBOX_GDK_PIXBUF_MODULE_FILE = "${librsvg}/${gdk-pixbuf.binaryDir}/loaders.cache";
   };
 
   nativeBuildInputs = [

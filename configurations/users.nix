@@ -29,6 +29,41 @@ let
       })
       inputs.llm-agents.overlays.shared-nixpkgs
     ]).llm-agents;
+  nonoWrap = import ../helpers/nono-wrap.nix {
+    inherit pkgs;
+    inherit (llmAgents) nono;
+  };
+  claudeAgentAcp = nonoWrap {
+    pkg = llmAgents.claude-agent-acp;
+    name = "claude-agent-acp";
+    profile = "claude-dev";
+    nonoArgs = [ "--allow-cwd" ];
+  };
+  claudeCode = nonoWrap {
+    pkg = llmAgents.claude-code;
+    name = "claude";
+    profile = "claude-dev";
+    nonoArgs = [ "--allow-cwd" ];
+  };
+  claudeDesktop = llmAgentsHost.claude-desktop.override {
+    commandLineArgs = "--password-store=gnome-libsecret";
+  };
+  piAgent = nonoWrap {
+    pkg = llmAgents.pi.overrideAttrs (
+      finalAttrs: previousAttrs: {
+        # Save npm extension in pi agent folder instead of global
+        postFixup = ''
+          wrapProgram $out/bin/pi \
+            --set NPM_CONFIG_PREFIX "/home/lkz/.pi/agent/.npm/" \
+            --set NPM_CONFIG_CACHE "/home/lkz/.pi/agent/.npm-cache/"
+        '';
+      }
+    );
+    name = "pi";
+    profile = "pi-dev";
+    nonoArgs = [ "--allow-cwd" ];
+    tmpDir = "/tmp/pi-$(id -u)";
+  };
   helium = inputs.helium.packages.${system}.default.override {
     # Upstream passes this flag through a shell-expansion idiom, but
     # wrapGAppsHook3 builds a makeBinaryWrapper that never expands it, so the
@@ -89,6 +124,9 @@ in
           bun
           caddy
           chezmoi
+          claudeAgentAcp
+          claudeCode
+          claudeDesktop
           cloudflared
           codiff
           curtail
@@ -222,25 +260,12 @@ in
         ++ (with llmAgents; [
           agent-browser
           ax
-          claude-agent-acp
-          claude-code
-          (llmAgentsHost.claude-desktop.override {
-            commandLineArgs = "--password-store=gnome-libsecret";
-          })
           herdr
           hunk
           nono
-          (pi.overrideAttrs (
-            finalAttrs: previousAttrs: {
-              # Save npm extension in pi agent folder instead of global
-              postFixup = ''
-                wrapProgram $out/bin/pi \
-                  --set NPM_CONFIG_PREFIX "/home/lkz/.pi/agent/.npm/" \
-              '';
-            }
-          ))
           rtk
-        ]);
+        ])
+        ++ [ piAgent ];
     };
   };
 }

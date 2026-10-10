@@ -249,6 +249,17 @@ in
           })
           video-trimmer
           wakatime-cli
+          (waku.overrideAttrs (
+            finalAttrs: previousAttrs: {
+              # Terminals spawn the passwd login shell before $SHELL; the login
+              # shell stays bash, so point them at fish directly
+              postPatch = (previousAttrs.postPatch or "") + ''
+                substituteInPlace crates/waku-client/src/command_env.rs \
+                  --replace-fail 'candidates.extend(account_shell);' \
+                    'candidates.push(PathBuf::from("${fish}/bin/fish"));'
+              '';
+            }
+          ))
           waydroid-helper
           wget
           wl-clipboard

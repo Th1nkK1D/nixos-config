@@ -41,16 +41,16 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "strata";
-  version = "0.21.0";
+  version = "1.0.0";
 
   src = fetchFromGitHub {
     owner = "lgse";
     repo = "strata";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-RSTEgtfDYYGxXef1J22NMGpmgjObg3T6APZqfSyfNPY=";
+    hash = "sha256-dFNsFCnkeZs0VwmYRyu+6Jh8XxJzv+agUlP70Fdxa5Q=";
   };
 
-  cargoHash = "sha256-0nMfswOfyXiwIWF0Xne61jGwPdU/gMo6Wt6JGZEfrJw=";
+  cargoHash = "sha256-vuhHierqb4WsMdg890NpkaztYnfsnck2FxMz5cPMwCQ=";
 
   buildNoDefaultFeatures = !enableUnfree;
 

@@ -5,6 +5,7 @@
   dpkg,
   autoPatchelfHook,
   wrapGAppsHook3,
+  python3,
   nix-update-script,
   cairo,
   dbus,
@@ -31,6 +32,7 @@ stdenv.mkDerivation (finalAttrs: {
     dpkg
     autoPatchelfHook
     wrapGAppsHook3
+    (python3.withPackages (ps: [ ps.brotli ]))
   ];
 
   buildInputs = [
@@ -49,6 +51,16 @@ stdenv.mkDerivation (finalAttrs: {
     runHook preInstall
 
     cp -r usr $out
+
+    # CanvasKit returns a null shader for degenerate gradients (e.g. a gradient
+    # stroke on a zero-height line), and the gradient paint helper deletes it
+    # unchecked, aborting the render pass. The fix has to go into the minified
+    # frontend embedded in the binary; the script fails the build once upstream
+    # code no longer matches
+    python3 ${./patch-assets.py} $out/bin/OpenPencil \
+      '(\w+)=>\{try\{(\w+)\.setShader\(\1\)\}finally\{\1\.delete\(\)\}\}' \
+      '\1=>{try{\2.setShader(\1)}finally{\1?.delete()}}'
+
     substituteInPlace $out/share/applications/OpenPencil.desktop \
       --replace-fail "Categories=" "Categories=Graphics;VectorGraphics;"
 

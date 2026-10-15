@@ -7,18 +7,18 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "open-pencil-cli";
-  version = "0.15.1";
+  version = "0.16.0";
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@open-pencil/cli/-/cli-${finalAttrs.version}.tgz";
-    hash = "sha256-b2q1zMjR8SYlts7SS3WHduyG+GSUwfT+Ha2RmwghyFo=";
+    hash = "sha256-Regn5DVeOT1+cHJgBOHZzVGEpk8uhuvIstruYd+ANHY=";
   };
 
   postPatch = ''
     cp ${./package-lock.json} package-lock.json
   '';
 
-  npmDepsHash = "sha256-30IEE+FeNBg4Ixp9vws9LhpdBJbOXAwi6gybXaH6g4E=";
+  npmDepsHash = "sha256-mHd5kQNpV1ck6W+J1QNmAumA7busvL4qxXBnUzzLJyQ=";
   npmFlags = [ "--ignore-scripts" ];
   dontNpmBuild = true;
 

@@ -20,11 +20,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "open-pencil-desktop";
-  version = "0.15.1";
+  version = "0.16.0";
 
   src = fetchurl {
     url = "https://github.com/open-pencil/open-pencil/releases/download/v${finalAttrs.version}/OpenPencil_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-IP6tQoFbbSp4VLaIkTvsu6Xhzip++yxuCg4jQAFFcfg=";
+    hash = "sha256-RR6Q79Rgf1KP9ecF38b2GT6u7yIsM6pp6/vYY9FwvXM=";
   };
 
   nativeBuildInputs = [

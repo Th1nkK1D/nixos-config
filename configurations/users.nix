@@ -199,6 +199,7 @@ in
           papers
           parallel
           pdfarranger
+          piAgent
           pnpm
           psmisc
           (python3.withPackages (
@@ -275,8 +276,7 @@ in
           hunk
           nono
           rtk
-        ])
-        ++ [ piAgent ];
+        ]);
     };
   };
 }

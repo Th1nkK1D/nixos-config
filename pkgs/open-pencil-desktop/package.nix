@@ -61,6 +61,13 @@ stdenv.mkDerivation (finalAttrs: {
       '(\w+)=>\{try\{(\w+)\.setShader\(\1\)\}finally\{\1\.delete\(\)\}\}' \
       '\1=>{try{\2.setShader(\1)}finally{\1?.delete()}}'
 
+    # WebKitGTK rasterizes CSS url() cursors at 1x, so the SVG tool cursors
+    # (hand, pen, pencil, comment) come out pixelated on scaled outputs. Use
+    # their named fallbacks (grab, grabbing, crosshair) from the cursor theme
+    python3 ${./patch-assets.py} $out/bin/OpenPencil \
+      'function (\w+)\((\w+),(\w+),(\w+),(\w+)\)\{return`url\("data:image/svg\+xml,\$\{encodeURIComponent\(\2\)\}"\) \$\{\3\} \$\{\4\}, \$\{\5\}`\}' \
+      'function \1(\2,\3,\4,\5){return \5}'
+
     substituteInPlace $out/share/applications/OpenPencil.desktop \
       --replace-fail "Categories=" "Categories=Graphics;VectorGraphics;"
 

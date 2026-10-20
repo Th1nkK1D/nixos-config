@@ -14,7 +14,22 @@
       modesetting.enable = true;
       nvidiaSettings = true;
       open = true;
-      package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
+      # patchelf 0.19.2 corrupts binaries when --interpreter and --set-rpath run in
+      # one invocation, so nvidia-smi segfaults. Re-patch them in two steps until
+      # https://github.com/NixOS/nixpkgs/pull/576397 (fixes
+      # https://github.com/NixOS/nixpkgs/issues/576412) lands.
+      package = config.boot.kernelPackages.nvidiaPackages.legacy_580.overrideAttrs (old: {
+        postFixup = (old.postFixup or "") + ''
+          for orig in $bin/origBin/*; do
+            name=$(basename "$orig")
+            rpath=$(patchelf --print-rpath "$bin/bin/$name")
+            interp=$(patchelf --print-interpreter "$bin/bin/$name")
+            install -m755 "$orig" "$bin/bin/$name"
+            patchelf --set-rpath "$rpath" "$bin/bin/$name"
+            patchelf --set-interpreter "$interp" "$bin/bin/$name"
+          done
+        '';
+      });
       powerManagement = {
         enable = true;
         finegrained = true;

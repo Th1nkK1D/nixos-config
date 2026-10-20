@@ -1,4 +1,4 @@
-{ inputs, lib, ... }:
+{ inputs, ... }:
 {
   nixpkgs = {
     config = {
@@ -14,14 +14,6 @@
       # Packages in ../pkgs, not in nixpkgs yet
       inputs.self.overlays.default
       (final: prev: {
-        # Curtail shells out to `scour` for SVG, but the nixpkgs wrapper only puts
-        # the JPEG/PNG/WebP tools on PATH, so SVG fails with "An unknown error has
-        # occurred" (shell exit 127 swallowed by Compressor.run's catch-all)
-        curtail = prev.curtail.overrideAttrs (old: {
-          preFixup = (old.preFixup or "") + ''
-            makeWrapperArgs+=("--prefix" "PATH" ":" "${lib.makeBinPath [ prev.scour ]}")
-          '';
-        });
         strata = prev.strata.override { enableUnfree = true; };
         # The desktop entry hardcodes --gtk-single-instance=true, so arguments from
         # xdg-terminal-exec (e.g. Strata's "Open terminal here") were ignores.

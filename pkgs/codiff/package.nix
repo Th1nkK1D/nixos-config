@@ -39,11 +39,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "codiff";
-  version = "1.16.2";
+  version = "1.18.1";
 
   src = fetchurl {
     url = "https://github.com/nkzw-tech/codiff/releases/download/v${finalAttrs.version}/codiff_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-QDlcb3jdPOwEG6r9WL71hYx/2GIxSJZ+tWE6sx7VxoY=";
+    hash = "sha256-eYplAohhE6unQuwIqQ4ER8+3OFl8iUIptWZhBYnp3Rk=";
   };
 
   nativeBuildInputs = [
@@ -94,14 +94,6 @@ stdenv.mkDerivation (finalAttrs: {
     # Hide the menu bar on Linux like other platforms; press Alt to reveal it
     substituteInPlace $out/lib/codiff/resources/app/electron/main.cjs \
       --replace-fail "autoHideMenuBar: process.platform !== 'linux'," "autoHideMenuBar: true,"
-
-    # Upstream pins exact model ids that never float to newer releases; pass the
-    # Claude CLI's aliases instead so the picker follows the current models
-    substituteInPlace $out/lib/codiff/resources/app/electron/claude.cjs \
-      --replace-fail "          claudeModel," "          claudeModel.replace(/^claude-(opus|sonnet|haiku).*\$/, '\$1')," \
-      --replace-fail "label: 'Best: Claude Opus 4.8'," "label: 'Best: Claude Opus'," \
-      --replace-fail "label: 'Balanced: Claude Sonnet 4.6'," "label: 'Balanced: Claude Sonnet'," \
-      --replace-fail "label: 'Fast: Claude Haiku 4.5'," "label: 'Fast: Claude Haiku',"
 
     install -Dm644 usr/share/pixmaps/codiff.png \
       $out/share/icons/hicolor/1024x1024/apps/codiff.png

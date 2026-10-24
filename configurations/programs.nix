@@ -2,8 +2,8 @@
 {
   programs = {
     dconf.enable = true;
-    dsearch.enable = true;
-    dms-shell = {
+    dux-search.enable = true;
+    dux-shell = {
       enable = true;
       excludePackages = with pkgs; [ matugen ];
       systemd.enable = true;

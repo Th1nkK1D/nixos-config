@@ -11,7 +11,6 @@
     initrd = {
       luks.devices."luks-6b985d7e-f11a-4a4f-a606-f28b6a565c2e".device =
         "/dev/disk/by-uuid/6b985d7e-f11a-4a4f-a606-f28b6a565c2e";
-      systemd.enable = true;
     };
     loader = {
       efi.canTouchEfiVariables = true;

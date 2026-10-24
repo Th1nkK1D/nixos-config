@@ -130,7 +130,7 @@ in
           cloudflared
           codiff
           curtail
-          dankcalendar
+          dux-calendar
           decibels
           deno
           dig

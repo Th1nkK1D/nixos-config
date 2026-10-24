@@ -24,7 +24,7 @@
         user = "lkz";
       };
       defaultSession = "niri";
-      dms-greeter = {
+      dux-greeter = {
         enable = true;
         compositor.name = "niri";
         configHome = "/home/lkz";

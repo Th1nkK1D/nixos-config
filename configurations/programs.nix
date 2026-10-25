@@ -40,6 +40,11 @@
         config.hardware.nvidia.package
       ];
     };
+    obs-studio = {
+      enable = true;
+      enableVirtualCamera = true;
+      plugins = with pkgs.obs-studio-plugins; [ obs-pipewire-audio-capture ];
+    };
     steam = {
       enable = true;
       remotePlay.openFirewall = true;

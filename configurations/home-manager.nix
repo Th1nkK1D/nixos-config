@@ -58,6 +58,14 @@ in
             [Service]
             ExecStartPre=${waitSniWatcher}
           '';
+          # Phone Connect plugin only checks the bus for kdeconnectd once at
+          # startup. Same filename as the template drop-in, so this replaces it
+          # for this instance and drops After=dms / the SNI wait (which would
+          # deadlock against Before=dms).
+          ".config/systemd/user/app-org.kde.kdeconnect.daemon@autostart.service.d/override.conf".text = ''
+            [Unit]
+            Before=dms.service
+          '';
         };
       };
       dconf = {

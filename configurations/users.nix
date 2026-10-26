@@ -175,6 +175,7 @@ in
           jdk
           jq
           kdePackages.qtdeclarative
+          kero
           keybase-gui
           kooha
           krita

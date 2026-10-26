@@ -45,8 +45,18 @@ let
     profile = "claude-dev";
     nonoArgs = [ "--allow-cwd" ];
   };
-  claudeDesktop = llmAgentsHost.claude-desktop.override {
-    commandLineArgs = "--password-store=gnome-libsecret";
+  claudeDesktop = pkgs.symlinkJoin {
+    name = "claude-desktop";
+    paths = [
+      (llmAgentsHost.claude-desktop.override {
+        commandLineArgs = "--password-store=gnome-libsecret";
+      })
+    ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    # Login shell stays bash, so point the app's terminal at fish
+    postBuild = ''
+      wrapProgram $out/bin/claude-desktop --set SHELL ${pkgs.fish}/bin/fish
+    '';
   };
   piAgent = nonoWrap {
     pkg = llmAgents.pi.overrideAttrs (

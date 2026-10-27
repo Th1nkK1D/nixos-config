@@ -12,23 +12,6 @@ let
   arkWithPackages = pkgs.ark.override { R = rWithPackages; };
   system = pkgs.stdenv.hostPlatform.system;
   llmAgents = inputs.llm-agents.packages.${system};
-  # llm-agents built against our nixpkgs (no binary cache), for packages whose
-  # FHS env must share the host's glibc: /run/opengl-driver's Mesa is built
-  # against our nixpkgs, and llm-agents' pin can lag behind. Upstream still uses
-  # the X11 aliases our allowAliases = false removes
-  llmAgentsHost =
-    (pkgs.appendOverlays [
-      (final: _: {
-        libX11 = final.libx11;
-        libXcomposite = final.libxcomposite;
-        libXcursor = final.libxcursor;
-        libXdamage = final.libxdamage;
-        libXext = final.libxext;
-        libXfixes = final.libxfixes;
-        libXrandr = final.libxrandr;
-      })
-      inputs.llm-agents.overlays.shared-nixpkgs
-    ]).llm-agents;
   nonoWrap = import ../helpers/nono-wrap.nix {
     inherit pkgs;
     inherit (llmAgents) nono;
@@ -44,19 +27,6 @@ let
     name = "claude";
     profile = "claude-dev";
     nonoArgs = [ "--allow-cwd" ];
-  };
-  claudeDesktop = pkgs.symlinkJoin {
-    name = "claude-desktop";
-    paths = [
-      (llmAgentsHost.claude-desktop.override {
-        commandLineArgs = "--password-store=gnome-libsecret";
-      })
-    ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    # Login shell stays bash, so point the app's terminal at fish
-    postBuild = ''
-      wrapProgram $out/bin/claude-desktop --set SHELL ${pkgs.fish}/bin/fish
-    '';
   };
   piAgent = nonoWrap {
     pkg = llmAgents.pi.overrideAttrs (
@@ -155,7 +125,6 @@ in
           chezmoi
           claudeAgentAcp
           claudeCode
-          claudeDesktop
           cloudflared
           codiff
           curtail

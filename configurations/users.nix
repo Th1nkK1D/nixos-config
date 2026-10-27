@@ -105,6 +105,25 @@ in
     };
   };
 
+  # Access tokens last ~8h and only a claude CLI run renews the file that
+  # usage widgets (dux, waku) read
+  systemd.user = {
+    services.claude-token-refresh = {
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${llmAgents.claude-code}/bin/claude auth status";
+        StandardOutput = "null";
+      };
+    };
+    timers.claude-token-refresh = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "hourly";
+        Persistent = true;
+      };
+    };
+  };
+
   users = {
     users.lkz = {
       isNormalUser = true;

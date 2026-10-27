@@ -26,11 +26,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "kero";
-  version = "2.1.21";
+  version = "2.1.24";
 
   src = fetchurl {
     url = "https://github.com/egoist/kero/releases/download/v${finalAttrs.version}/kero-${finalAttrs.version}-linux-amd64.tar.gz";
-    hash = "sha256-ARsP4uEzY3JE8U/ZWxbA+H+Z80kNlnUhZAD8zAcM5sk=";
+    hash = "sha256-0cnrSBKKa8nG3vMvVmIYy7mNtKGsAR6o08Q1RuYnBIQ=";
   };
 
   sourceRoot = ".";

@@ -39,11 +39,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "codiff";
-  version = "1.18.1";
+  version = "1.18.3";
 
   src = fetchurl {
     url = "https://github.com/nkzw-tech/codiff/releases/download/v${finalAttrs.version}/codiff_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-eYplAohhE6unQuwIqQ4ER8+3OFl8iUIptWZhBYnp3Rk=";
+    hash = "sha256-ZjD+8pAth0esfd/lm4ofPOlEySbq1rwi718/JotLeJE=";
   };
 
   nativeBuildInputs = [

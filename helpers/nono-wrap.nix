@@ -19,7 +19,8 @@ pkgs.symlinkJoin {
       # and Chromium's own sandbox cannot start under Landlock
       export AGENT_BROWSER_SOCKET_DIR="''${AGENT_BROWSER_SOCKET_DIR:-$TMPDIR/agent-browser}"
       export AGENT_BROWSER_ARGS="''${AGENT_BROWSER_ARGS:---no-sandbox}"
-      exec ${nono}/bin/nono run --silent --profile ${profile} ${pkgs.lib.escapeShellArgs nonoArgs} -- ${pkg}/bin/${name} "$@"
+      # One-off extra nono flags, e.g. NONO_EXTRA_ARGS="--allow $HOME/foo" claude (word-split)
+      exec ${nono}/bin/nono run --silent --profile ${profile} ${pkgs.lib.escapeShellArgs nonoArgs} $NONO_EXTRA_ARGS -- ${pkg}/bin/${name} "$@"
     '')
     pkg
   ];

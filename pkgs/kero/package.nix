@@ -2,6 +2,9 @@
   lib,
   stdenv,
   fetchurl,
+  fetchFromGitHub,
+  buildGoModule,
+  go_1_27,
   autoPatchelfHook,
   wrapGAppsHook3,
   nix-update-script,
@@ -27,6 +30,39 @@
 stdenv.mkDerivation (finalAttrs: {
   pname = "kero";
   version = "2.1.24";
+
+  # Built from source for the patch only; libghostty-vt and the fonts still
+  # come from the release tarball, which `mygo build` would otherwise fetch
+  app = (buildGoModule.override { go = go_1_27; }) {
+    pname = "kero-app";
+    inherit (finalAttrs) version;
+
+    src = fetchFromGitHub {
+      owner = "egoist";
+      repo = "kero";
+      tag = "v${finalAttrs.version}";
+      hash = "sha256-ZWMMiHapkRJwn6RgwJ8ZWn4Ud/V5zJSeSiolAPchlNw=";
+    };
+
+    vendorHash = "sha256-NCKPSQ7q91ZdcucbGSGs7kraW4YaSmQ6c0Q59lfvWmY=";
+    subPackages = [ "." ];
+    # No minimize, maximize or close buttons: niri has no use for them
+    postPatch = ''
+      substituteInPlace platform.go \
+        --replace-fail '!ownControls || w == nil' 'true'
+    '';
+    doCheck = false;
+
+    # What `mygo build` links in
+    ldflags = [
+      "-s"
+      "-w"
+      "-X github.com/egoist/mygo.production=1"
+      "-X github.com/egoist/mygo.packageName=Kero"
+      "-X github.com/egoist/mygo.packageVersion=${finalAttrs.version}"
+      "-X github.com/egoist/mygo.packageIdentifier=sh.kero"
+    ];
+  };
 
   src = fetchurl {
     url = "https://github.com/egoist/kero/releases/download/v${finalAttrs.version}/kero-${finalAttrs.version}-linux-amd64.tar.gz";
@@ -78,7 +114,8 @@ stdenv.mkDerivation (finalAttrs: {
 
     # kero loads libghostty-vt.so and re-executes itself as the kerod daemon
     # from its own directory, so the real binary stays next to the library
-    install -Dm755 -t $out/lib/kero kero libghostty-vt.so
+    install -Dm755 -t $out/lib/kero libghostty-vt.so
+    install -Dm755 ${finalAttrs.app}/bin/kero $out/lib/kero/kero
     cp -r fonts $out/lib/kero/
 
     install -Dm644 kero.png $out/share/pixmaps/kero.png

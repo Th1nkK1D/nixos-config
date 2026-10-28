@@ -83,11 +83,14 @@ in
         Type = "oneshot";
         ExecStart = "${llmAgents.claude-code}/bin/claude auth status";
         StandardOutput = "null";
+        Restart = "on-failure";
+        RestartSec = "1min";
       };
     };
     timers.claude-token-refresh = {
       wantedBy = [ "timers.target" ];
       timerConfig = {
+        OnStartupSec = "1min";
         OnCalendar = "hourly";
         Persistent = true;
       };

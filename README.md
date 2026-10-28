@@ -7,12 +7,16 @@ My NixOS configuration, plus a few packages that aren't in nixpkgs yet.
 | Package | Description |
 | --- | --- |
 | [codiff](https://github.com/nkzw-tech/codiff) | Minimal local diff viewer for reviewing and committing Git changes |
+| [kero](https://kero.sh) | Native terminal app for running coding agents in sessions that outlive the window |
 | [open-pencil-cli](https://openpencil.dev/programmable/cli/inspecting) | Inspect, analyze, script, and export .fig and .pen files from the terminal |
 | [open-pencil-desktop](https://openpencil.dev) | Open-source design editor for .fig and .pen files with built-in AI, with its MCP server on PATH |
 | [open-pencil-mcp](https://github.com/open-pencil/open-pencil/tree/main/packages/mcp) | MCP server for OpenPencil desktop automation |
 | [strata](https://github.com/lgse/strata) | Fast, keyboard-first file manager for modern Linux desktops |
+| [waku](https://waku.sh) | Native app for all your coding agents |
 
 All packages are `x86_64-linux` only. There is no binary cache, so Nix builds them on your machine.
+
+Kero is built from source with one patch: its minimize, maximize and close buttons are hidden, since they are of no use on a tiling compositor like niri. Its libghostty and fonts come from the release tarball.
 
 Strata is unfree: its RAR extraction compiles in RARLAB's UnRAR code, whose license isn't free software ([lgse/strata#1327](https://github.com/lgse/strata/issues/1327)). You need to allow unfree packages to use it.
 

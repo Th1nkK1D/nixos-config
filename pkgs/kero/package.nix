@@ -51,6 +51,11 @@ stdenv.mkDerivation (finalAttrs: {
       substituteInPlace platform.go \
         --replace-fail '!ownControls || w == nil' 'true'
     '';
+    # Alt+click on the shell prompt moves its cursor, in the vendored terminal widget
+    preBuild = ''
+      chmod -R u+w vendor/github.com/egoist/mygo
+      patch -d vendor/github.com/egoist/mygo -p2 < ${./mygo-click-to-move.patch}
+    '';
     doCheck = false;
 
     # What `mygo build` links in

@@ -1,8 +1,7 @@
-diff --git a/mygo-orig/plugins/terminal/internal/vt/lib.go b/mygo-new/plugins/terminal/internal/vt/lib.go
-index ae5c3c0..4a4acb3 100644
+diff -ru mygo-orig/plugins/terminal/internal/vt/lib.go mygo-new/plugins/terminal/internal/vt/lib.go
 --- a/mygo-orig/plugins/terminal/internal/vt/lib.go
 +++ b/mygo-new/plugins/terminal/internal/vt/lib.go
-@@ -45,7 +45,7 @@ var (
+@@ -45,7 +45,7 @@
  	fnGestureNew, fnGestureFree, fnGestureReset, fnGestureGet, fnGestureEventNew, fnGestureEventFree,
  	fnGestureEventSet, fnGestureEvent, fnSelectAll uintptr
  
@@ -11,7 +10,7 @@ index ae5c3c0..4a4acb3 100644
  
  	fnSearchNew, fnSearchFree, fnSearchSet, fnSearchGet, fnSearchFeed, fnSearchTick, fnPointFromGridRef uintptr
  
-@@ -150,6 +150,7 @@ var symbols = []struct {
+@@ -150,6 +150,7 @@
  	{"ghostty_grid_ref_hyperlink_uri", &fnGridRefHyperlinkURI},
  	{"ghostty_grid_ref_graphemes", &fnGridRefGraphemes},
  	{"ghostty_grid_ref_cell", &fnGridRefCell},
@@ -19,7 +18,16 @@ index ae5c3c0..4a4acb3 100644
  	{"ghostty_row_get", &fnRowData},
  	{"ghostty_type_json", &fnTypeJSON},
  	{"ghostty_formatter_terminal_new", &fnFormatterTerminalNew},
-@@ -334,6 +335,7 @@ var enums = []struct {
+@@ -285,7 +286,7 @@
+ 
+ // cell is the layout of the packed GhosttyCell, from the manifest.
+ var cell struct {
+-	tag, codepoint, styleID, wide, hyperlink bitField
++	tag, codepoint, styleID, wide, hyperlink, semantic bitField
+ 	// paletteIndex, r, g and b are the content of cells holding only a
+ 	// background color.
+ 	paletteIndex, r, g, b bitField
+@@ -334,6 +335,7 @@
  	{"GhosttyTerminalData", "MOUSE_TRACKING", dataMouseTracking},
  	{"GhosttyTerminalData", "MOUSE_SHAPE", dataMouseShape},
  	{"GhosttyRowData", "WRAP", rowDataWrap},
@@ -27,32 +35,59 @@ index ae5c3c0..4a4acb3 100644
  	{"GhosttyRenderStateRowData", "RAW", rowDataRaw},
  	{"GhosttyKittyGraphicsPlacementData", "Z", placementZ},
  	{"GhosttyKittyGraphicsImageData", "GENERATION", imageGeneration},
-diff --git a/mygo-orig/plugins/terminal/internal/vt/render.go b/mygo-new/plugins/terminal/internal/vt/render.go
-index 994db45..4b44fda 100644
+@@ -444,6 +446,7 @@
+ 	field(&cell.styleID, "style_id")
+ 	field(&cell.wide, "wide")
+ 	field(&cell.hyperlink, "hyperlink")
++	field(&cell.semantic, "semantic_content")
+ 	arm(&cell.codepoint, "CODEPOINT", "codepoint")
+ 	arm(&cell.paletteIndex, "BG_COLOR_PALETTE", "index")
+ 	arm(&cell.r, "BG_COLOR_RGB", "r")
+diff -ru mygo-orig/plugins/terminal/internal/vt/render.go mygo-new/plugins/terminal/internal/vt/render.go
 --- a/mygo-orig/plugins/terminal/internal/vt/render.go
 +++ b/mygo-new/plugins/terminal/internal/vt/render.go
-@@ -186,6 +186,16 @@ func (r *RenderState) RowWrapped() bool {
+@@ -186,6 +186,20 @@
  	return ok(call(fnRowData, uintptr(raw), rowDataWrap, uintptr(unsafe.Pointer(&v)))) && v
  }
  
-+// RowPrompt reports whether the row belongs to a shell prompt (OSC 133).
-+func (r *RenderState) RowPrompt() bool {
++// RowPromptKind tells how the row belongs to a shell prompt (OSC 133): 0
++// not, 1 where the prompt starts, 2 where it goes on.
++func (r *RenderState) RowPromptKind() int {
 +	var raw uint64
 +	if !r.rowGet(rowDataRaw, unsafe.Pointer(&raw)) {
-+		return false
++		return 0
 +	}
 +	var v int32
-+	return ok(call(fnRowData, uintptr(raw), rowDataSemanticPrompt, uintptr(unsafe.Pointer(&v)))) && v != 0
++	if !ok(call(fnRowData, uintptr(raw), rowDataSemanticPrompt, uintptr(unsafe.Pointer(&v)))) {
++		return 0
++	}
++	return int(v)
 +}
 +
  // RowID returns the identity of the row, which it keeps as it scrolls.
  func (r *RenderState) RowID() RowID {
  	var id RowID
-diff --git a/mygo-orig/plugins/terminal/internal/vt/rows.go b/mygo-new/plugins/terminal/internal/vt/rows.go
-index 523951a..9cde3e3 100644
+@@ -227,6 +241,8 @@
+ 	Style     uint16
+ 	Wide      Wide
+ 	Hyperlink bool
++	// Input tells that a shell prompt's input was typed there (OSC 133 B).
++	Input bool
+ 	// Background is the color of a cell without text whose background
+ 	// a program filled, when HasBackground; Palette tells that it is
+ 	// the palette's color of index Background.R.
+@@ -259,6 +275,7 @@
+ 		out.Style = uint16(cell.styleID.of(c))
+ 		out.Wide = Wide(cell.wide.of(c))
+ 		out.Hyperlink = cell.hyperlink.of(c) != 0
++		out.Input = cell.semantic.of(c) == 1
+ 		r.raw = append(r.raw, out)
+ 	}
+ 	// The cells of the row for the style and grapheme lookups.
+diff -ru mygo-orig/plugins/terminal/internal/vt/rows.go mygo-new/plugins/terminal/internal/vt/rows.go
 --- a/mygo-orig/plugins/terminal/internal/vt/rows.go
 +++ b/mygo-new/plugins/terminal/internal/vt/rows.go
-@@ -10,12 +10,28 @@ import (
+@@ -10,12 +10,32 @@
  // reads.
  
  const (
@@ -64,44 +99,58 @@ index 523951a..9cde3e3 100644
  	dataScrollbackRows     = 15
  )
  
-+// PromptRow reports whether row y of the viewport belongs to a shell prompt
-+// (OSC 133), where a click can move the cursor.
-+func (t *Terminal) PromptRow(y int) bool {
++// PromptKind tells how row y of the viewport belongs to a shell prompt
++// (OSC 133), where a click can move the cursor: 0 not, 1 where the prompt
++// starts, 2 where it goes on.
++func (t *Terminal) PromptKind(y int) int {
 +	ref, found := t.CellAt(0, y)
 +	if !found {
-+		return false
++		return 0
 +	}
 +	var row uint64
 +	if !ok(call(fnGridRefRow, uintptr(unsafe.Pointer(&ref)), uintptr(unsafe.Pointer(&row)))) {
-+		return false
++		return 0
 +	}
 +	var v int32
-+	return ok(call(fnRowData, uintptr(row), rowDataSemanticPrompt, uintptr(unsafe.Pointer(&v)))) && v != 0
++	if !ok(call(fnRowData, uintptr(row), rowDataSemanticPrompt, uintptr(unsafe.Pointer(&v)))) {
++		return 0
++	}
++	return int(v)
 +}
 +
  // ScrollbackRows returns how many rows the scrollback holds.
  func (t *Terminal) ScrollbackRows() int {
  	var n uintptr
-diff --git a/mygo-orig/plugins/terminal/mirror.go b/mygo-new/plugins/terminal/mirror.go
-index b9bcaac..bb29bbc 100644
+diff -ru mygo-orig/plugins/terminal/mirror.go mygo-new/plugins/terminal/mirror.go
 --- a/mygo-orig/plugins/terminal/mirror.go
 +++ b/mygo-new/plugins/terminal/mirror.go
-@@ -526,6 +526,10 @@ func readLine(term *vt.Terminal, rs *vt.RenderState, y int) line {
+@@ -526,6 +526,22 @@
  		b.WriteString("\x1b[0m")
  	}
  	l.vt = b.Bytes()
-+	if len(l.vt) > 0 && rs.RowPrompt() {
-+		// The other terminal learns the prompt rows, for its clicks to move the cursor
-+		l.vt = append([]byte("\x1b]133;A\x07"), l.vt...)
++	if len(l.vt) > 0 {
++		// The other terminal learns the prompt rows, for its clicks to move the cursor:
++		// where the prompt starts, and the rows a shell goes on typing over
++		kind := rs.RowPromptKind()
++		for _, c := range cells {
++			if kind == 0 && c.Input {
++				kind = 2
++			}
++		}
++		switch kind {
++		case 1:
++			l.vt = append([]byte("\x1b]133;A\x07"), l.vt...)
++		case 2:
++			l.vt = append([]byte("\x1b]133;A;k=c\x07"), l.vt...)
++		}
 +	}
  	return l
  }
  
-diff --git a/mygo-orig/plugins/terminal/view.go b/mygo-new/plugins/terminal/view.go
-index a197938..7796581 100644
+diff -ru mygo-orig/plugins/terminal/view.go mygo-new/plugins/terminal/view.go
 --- a/mygo-orig/plugins/terminal/view.go
 +++ b/mygo-new/plugins/terminal/view.go
-@@ -1049,6 +1049,9 @@ func (v *view) pointerEvent(ev ui.InputEvent) bool {
+@@ -1049,6 +1049,9 @@
  		if ev.Button != 0 {
  			return false // the context menu
  		}
@@ -111,36 +160,100 @@ index a197938..7796581 100644
  		ref, ok := t.term.CellAt(col, row)
  		if !ok {
  			return false
-@@ -1106,6 +1109,42 @@ func (v *view) pointerEvent(ev ui.InputEvent) bool {
+@@ -1106,6 +1109,106 @@
  	return false
  }
  
 +// clickToMove moves the shell's cursor to the cell clicked on its prompt
-+// line, by typing arrow keys, and reports whether it did. It stops at the
-+// end of the text: a Right arrow there would accept a suggestion; t.mu is
-+// held.
++// line, or on a row the line wraps over, by typing arrow keys, and reports
++// whether it did. It stops at the end of the text: a Right arrow there
++// would accept a suggestion; t.mu is held.
 +func (v *view) clickToMove(col, row int) bool {
 +	term := v.t.term
 +	cx, cy := term.Cursor()
-+	if row != cy || term.AltScreen() || !term.AtBottom() || !term.PromptRow(cy) {
++	if term.AltScreen() || !term.AtBottom() || term.PromptKind(cy) == 0 {
 +		return false
 +	}
-+	text, cols := term.RowText(row)
-+	end := cx
-+	for i, r := range text {
-+		if r != ' ' {
-+			end = max(end, cols[i]+1)
++	// The input starts where the prompt does and goes on over the rows
++	// that follow it, above and below the cursor's.
++	_, rows := term.Size()
++	top, bottom := cy, cy
++	for top > 0 && term.PromptKind(top) == 2 {
++		top--
++	}
++	for bottom+1 < rows && term.PromptKind(bottom+1) == 2 {
++		bottom++
++	}
++	if row < top || row > bottom {
++		return false
++	}
++	// extent returns the columns of a row's cells, and the end of its text.
++	extent := func(y int) ([]int, int) {
++		text, cols := term.RowText(y)
++		end := 0
++		for i, r := range text {
++			if r != ' ' {
++				end = cols[i] + 1
++			}
 +		}
++		return cols, end
 +	}
-+	col = min(col, end)
-+	lo, hi, key := col, cx, "D"
-+	if col > cx {
-+		lo, hi, key = cx, col, "C"
-+	}
-+	steps := 0
-+	for _, c := range cols {
-+		if c >= lo && c < hi {
-+			steps++
++	steps, key := 0, "D"
++	if row < cy {
++		cols, end := extent(row)
++		for _, c := range cols {
++			if c >= col && c < end {
++				steps++
++			}
++		}
++		for y := row + 1; y < cy; y++ {
++			cols, end := extent(y)
++			for _, c := range cols {
++				if c < end {
++					steps++
++				}
++			}
++		}
++		cols, _ = extent(cy)
++		for _, c := range cols {
++			if c < cx {
++				steps++
++			}
++		}
++	} else if row > cy {
++		key = "C"
++		cols, end := extent(cy)
++		for _, c := range cols {
++			if c >= cx && c < end {
++				steps++
++			}
++		}
++		for y := cy + 1; y < row; y++ {
++			cols, end := extent(y)
++			for _, c := range cols {
++				if c < end {
++					steps++
++				}
++			}
++		}
++		cols, end = extent(row)
++		for _, c := range cols {
++			if c < min(col, end) {
++				steps++
++			}
++		}
++	} else {
++		cols, end := extent(cy)
++		end = max(end, cx)
++		col = min(col, end)
++		lo, hi := col, cx
++		if col > cx {
++			lo, hi, key = cx, col, "C"
++		}
++		for _, c := range cols {
++			if c >= lo && c < hi {
++				steps++
++			}
 +		}
 +	}
 +	intro := "\x1b["

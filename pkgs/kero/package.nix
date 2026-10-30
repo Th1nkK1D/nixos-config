@@ -56,6 +56,10 @@ stdenv.mkDerivation (finalAttrs: {
       chmod -R u+w vendor/github.com/egoist/mygo
       patch -d vendor/github.com/egoist/mygo -p2 < ${./mygo-click-to-move.patch}
     '';
+    # The vendor directory does not exist yet where the modules are fetched
+    overrideModAttrs = _: {
+      preBuild = "";
+    };
     doCheck = false;
 
     # What `mygo build` links in

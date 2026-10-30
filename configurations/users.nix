@@ -76,7 +76,7 @@ in
   };
 
   # Access tokens last ~8h and only a claude CLI run renews the file that
-  # usage widgets (dux, waku) read
+  # usage widgets (dux) read
   systemd.user = {
     services.claude-token-refresh = {
       serviceConfig = {
@@ -252,17 +252,6 @@ in
           })
           video-trimmer
           wakatime-cli
-          (waku.overrideAttrs (
-            finalAttrs: previousAttrs: {
-              # Terminals spawn the passwd login shell before $SHELL; the login
-              # shell stays bash, so point them at fish directly
-              postPatch = (previousAttrs.postPatch or "") + ''
-                substituteInPlace crates/waku-client/src/command_env.rs \
-                  --replace-fail 'candidates.extend(account_shell);' \
-                    'candidates.push(PathBuf::from("${fish}/bin/fish"));'
-              '';
-            }
-          ))
           waydroid-helper
           wget
           wl-clipboard

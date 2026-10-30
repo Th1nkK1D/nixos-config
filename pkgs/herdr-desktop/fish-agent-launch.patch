@@ -1,0 +1,40 @@
+diff --git a/src/programs.rs b/src/programs.rs
+index 1c612dc..2f3f7ca 100644
+--- a/src/programs.rs
++++ b/src/programs.rs
+@@ -258,7 +258,7 @@ fn resolve(t: &Table, app: Option<&str>, argv: &[String]) -> Value {
+         && t.shells.iter().any(|s| s == base(&argv[0]))
+         && argv[1].starts_with('-')
+         && argv[1].ends_with('c')
+-        && argv[2].contains("\"$@\"")
++        && (argv[2].contains("\"$@\"") || argv[2].contains("$argv;"))
+     {
+         return resolve(t, None, &argv[4..]);
+     }
+@@ -352,6 +352,7 @@ mod tests {
+         assert_eq!(key(None, &["uv", "run", "pytest"]), "pytest");
+         assert_eq!(key(None, &["mytool"]), "program");
+         assert_eq!(key(None, &["/bin/zsh", "-ic", "\"$@\"; exec \"$0\" -i", "/bin/zsh", "vi", "x"]), "vim");
++        assert_eq!(key(None, &["/bin/fish", "-ic", "set -l sh $argv[1]; set -e argv[1]; $argv; exec $sh -i", "/bin/fish", "vi", "x"]), "vim");
+         let line = powershell_line(&["codex".into(), "fix it".into()]);
+         assert_eq!(key(None, &["pwsh.exe", "-NoExit", "-Command", &line]), "codex");
+         assert_eq!(key(None, &[r"C:\Windows\powershell.exe"]), "shell");
+diff --git a/src/window.rs b/src/window.rs
+index 50581eb..ca8ba63 100644
+--- a/src/window.rs
++++ b/src/window.rs
+@@ -2149,7 +2149,13 @@ impl AppWindow {
+                 // PowerShell has no `-ic`: run it, then stay. `&` finds npm's `.cmd` shims too.
+                 return vec![sh, "-NoExit".into(), "-Command".into(), crate::programs::powershell_line(&cmd)];
+             }
+-            let mut run = vec![sh.clone(), "-ic".into(), "\"$@\"; exec \"$0\" -i".into(), sh];
++            // fish has no `$@` or `$0`: its arguments, the shell first, are all in `$argv`
++            let line = if sh.rsplit('/').next() == Some("fish") {
++                "set -l sh $argv[1]; set -e argv[1]; $argv; exec $sh -i"
++            } else {
++                "\"$@\"; exec \"$0\" -i"
++            };
++            let mut run = vec![sh.clone(), "-ic".into(), line.into(), sh];
+             run.extend(cmd);
+             run
+         })

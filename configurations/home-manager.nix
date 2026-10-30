@@ -126,6 +126,30 @@ in
           enable = true;
           interactiveShellInit = ''
             set fish_greeting
+
+            # Kero only spins its tab for agents; report other commands so it does too.
+            # Agents and full-screen programs are left out: a declared status
+            # replaces Kero's own screen detection for them.
+            if set -q KERO_PANE
+              set -g __kero_skip claude codex pi opencode gemini amp cursor-agent vim nvim hx micro nano less man ssh htop btop lazygit fish kero
+
+              function __kero_preexec --on-event fish_preexec
+                set -l cmd (string split ' ' -- $argv[1])[1]
+                contains -- $cmd $__kero_skip; and return
+                kero report working $argv[1] >/dev/null 2>&1
+              end
+
+              function __kero_postexec --on-event fish_postexec
+                set -l code $status
+                set -l cmd (string split ' ' -- $argv[1])[1]
+                contains -- $cmd $__kero_skip; and return
+                if test $code -eq 0 -o $code -eq 130
+                  kero report clear >/dev/null 2>&1
+                else
+                  kero report error "exit $code" >/dev/null 2>&1
+                end
+              end
+            end
           '';
           plugins = [
             {

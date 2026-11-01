@@ -29,7 +29,7 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "kero";
-  version = "2.1.24";
+  version = "2.1.31";
 
   # Built from source for the patch only; libghostty-vt and the fonts still
   # come from the release tarball, which `mygo build` would otherwise fetch
@@ -41,15 +41,20 @@ stdenv.mkDerivation (finalAttrs: {
       owner = "egoist";
       repo = "kero";
       tag = "v${finalAttrs.version}";
-      hash = "sha256-ZWMMiHapkRJwn6RgwJ8ZWn4Ud/V5zJSeSiolAPchlNw=";
+      hash = "sha256-lhCdEPCuBkPWZznIeSoFPxfhxqjEt3uC6xPjWXRdrEg=";
     };
 
-    vendorHash = "sha256-NCKPSQ7q91ZdcucbGSGs7kraW4YaSmQ6c0Q59lfvWmY=";
+    vendorHash = "sha256-KiVj3Neaot04qgHKP1XDhuxK8jlK7ALkmSSdBRqjRV4=";
     subPackages = [ "." ];
-    # No minimize, maximize or close buttons: niri has no use for them
+    # No minimize, maximize or close buttons, nor the room kept for them: niri
+    # has no use for them
     postPatch = ''
       substituteInPlace platform.go \
-        --replace-fail '!ownControls || w == nil' 'true'
+        --replace-fail '!ownControls || w == nil' 'true' \
+        --replace-fail '!ownControls || a.win == nil' 'true' \
+        --replace-fail 'return in && y < headerH' 'return false && in && y < headerH'
+      substituteInPlace side.go \
+        --replace-fail 'ownControls && a.win != nil' 'false'
     '';
     # Alt+click on the shell prompt moves its cursor, in the vendored terminal widget
     preBuild = ''
@@ -75,7 +80,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   src = fetchurl {
     url = "https://github.com/egoist/kero/releases/download/v${finalAttrs.version}/kero-${finalAttrs.version}-linux-amd64.tar.gz";
-    hash = "sha256-0cnrSBKKa8nG3vMvVmIYy7mNtKGsAR6o08Q1RuYnBIQ=";
+    hash = "sha256-peiEdxTdTeYBNEV0JWe7QUJt9G2pE5MRxdRcCWuDUhE=";
   };
 
   sourceRoot = ".";

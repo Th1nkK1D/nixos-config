@@ -20,7 +20,7 @@ pkgs.symlinkJoin {
       export AGENT_BROWSER_SOCKET_DIR="''${AGENT_BROWSER_SOCKET_DIR:-$TMPDIR/agent-browser}"
       export AGENT_BROWSER_ARGS="''${AGENT_BROWSER_ARGS:---no-sandbox}"
       # One-off extra nono flags, e.g. NONO_EXTRA_ARGS="--allow $HOME/foo" claude (word-split)
-      exec ${nono}/bin/nono run --silent --profile ${profile} ${pkgs.lib.escapeShellArgs nonoArgs} $NONO_EXTRA_ARGS -- ${pkg}/bin/${name} "$@"
+      exec ${nono}/bin/nono run --silent --profile ${profile} --allow "$TMPDIR" ${pkgs.lib.escapeShellArgs nonoArgs} $NONO_EXTRA_ARGS -- ${pkg}/bin/${name} "$@"
     '')
     pkg
   ];

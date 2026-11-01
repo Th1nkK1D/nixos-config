@@ -131,18 +131,23 @@ in
             # Agents and full-screen programs are left out: a declared status
             # replaces Kero's own screen detection for them.
             if set -q KERO_PANE
-              set -g __kero_skip claude codex pi opencode gemini amp cursor-agent vim nvim hx micro nano less man ssh htop btop lazygit fish kero
+              set -g __kero_skip claude codex pi opencode gemini amp cursor-agent vim nvim hx micro nano less man ssh htop btop lazygit git-forgit fish kero
+
+              # Dev servers and watchers never finish, so a spinner would never stop.
+              function __kero_quiet
+                set -l cmd (string split ' ' -- $argv[1])[1]
+                contains -- $cmd $__kero_skip
+                or string match -qr '^(bun|pnpm|npm|yarn)( run)? (dev|start|serve|watch)\b|^docker[ -]compose up\b(?!.* (-d|--detach)\b)|^tail .*-f|^git forgit\b' -- $argv[1]
+              end
 
               function __kero_preexec --on-event fish_preexec
-                set -l cmd (string split ' ' -- $argv[1])[1]
-                contains -- $cmd $__kero_skip; and return
+                __kero_quiet $argv[1]; and return
                 kero report working $argv[1] >/dev/null 2>&1
               end
 
               function __kero_postexec --on-event fish_postexec
                 set -l code $status
-                set -l cmd (string split ' ' -- $argv[1])[1]
-                contains -- $cmd $__kero_skip; and return
+                __kero_quiet $argv[1]; and return
                 if test $code -eq 0 -o $code -eq 130
                   kero report clear >/dev/null 2>&1
                 else

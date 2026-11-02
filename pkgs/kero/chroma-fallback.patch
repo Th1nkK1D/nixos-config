@@ -1,0 +1,244 @@
+diff --git a/chroma.go b/chroma.go
+new file mode 100644
+index 0000000..d3e6105
+--- /dev/null
++++ b/chroma.go
+@@ -0,0 +1,163 @@
++package main
++
++import (
++	"path"
++	"strings"
++	"time"
++
++	"github.com/alecthomas/chroma/v2"
++	"github.com/alecthomas/chroma/v2/lexers"
++	"github.com/egoist/mygo/ui/editor"
++)
++
++// Chroma re-tokenizes the whole file after each edit, so big ones stay plain.
++const chromaMax = 512 << 10
++
++var chromaAliases = map[string]string{".astro": "svelte", ".mdx": "markdown"}
++
++func languageFor(name string) *editor.Language {
++	if l := editor.LanguageFor(name); l != nil {
++		return l
++	}
++	lx := lexers.Match(name)
++	if lx == nil {
++		lx = lexers.Get(chromaAliases[path.Ext(name)])
++	}
++	if lx == nil {
++		return nil
++	}
++	front := path.Ext(name) == ".astro"
++	return &editor.Language{
++		Name: lx.Config().Name,
++		Highlighter: func(text editor.Snapshot, _ func()) editor.Highlighter {
++			return &chromaHighlighter{lx: lx, front: front, text: text, stale: true}
++		},
++	}
++}
++
++func frontmatterLines(lx chroma.Lexer, text string) [][]editor.Token {
++	if end := strings.Index(text, "\n---\n"); strings.HasPrefix(text, "---\n") && end >= 0 {
++		end += len("\n---\n")
++		if ts := lexers.Get("typescript"); ts != nil {
++			head := tokenLines(ts, text[:end])
++			return append(head[:len(head)-1], tokenLines(lx, text[end:])...)
++		}
++	}
++	return tokenLines(lx, text)
++}
++
++type chromaHighlighter struct {
++	lx    chroma.Lexer
++	front bool
++	text editor.Snapshot
++	lines [][]editor.Token
++	stale bool
++}
++
++func (h *chromaHighlighter) Edit(_, new editor.Snapshot, _ []editor.Change) {
++	h.text, h.stale = new, true
++}
++
++func (h *chromaHighlighter) Highlight(_ int, _ time.Duration) bool {
++	if h.stale {
++		h.lines, h.stale = nil, false
++		if h.text.Len() <= chromaMax {
++			if h.front {
++				h.lines = frontmatterLines(h.lx, h.text.String())
++			} else {
++				h.lines = tokenLines(h.lx, h.text.String())
++			}
++		}
++	}
++	return true
++}
++
++func (h *chromaHighlighter) Tokens(i int, text string, dst []editor.Token) ([]editor.Token, bool) {
++	if i < len(h.lines) {
++		for _, t := range h.lines[i] {
++			if t.End > len(text) {
++				t.End = len(text)
++			}
++			dst = append(dst, t)
++		}
++	}
++	return dst, !h.stale
++}
++
++func tokenLines(lx chroma.Lexer, text string) [][]editor.Token {
++	it, err := lx.Tokenise(nil, text)
++	if err != nil {
++		return nil
++	}
++	lines := [][]editor.Token{nil}
++	col := 0
++	for tok := it(); tok != chroma.EOF; tok = it() {
++		kind := tokenKind(tok.Type)
++		rest := tok.Value
++		for {
++			part, after, more := strings.Cut(rest, "\n")
++			if part != "" {
++				col += len(part)
++				last := len(lines) - 1
++				if n := len(lines[last]); n > 0 && lines[last][n-1].Kind == kind {
++					lines[last][n-1].End = col
++				} else {
++					lines[last] = append(lines[last], editor.Token{End: col, Kind: kind})
++				}
++			}
++			if !more {
++				break
++			}
++			lines, col, rest = append(lines, nil), 0, after
++		}
++	}
++	return lines
++}
++
++func tokenKind(t chroma.TokenType) editor.TokenKind {
++	switch {
++	case t == chroma.KeywordType, t == chroma.NameClass, t == chroma.NameNamespace, t == chroma.NameException:
++		return editor.TokenType
++	case t == chroma.KeywordConstant, t == chroma.NameConstant, t == chroma.NameBuiltinPseudo:
++		return editor.TokenConstant
++	case t == chroma.NameFunction, t == chroma.NameFunctionMagic, t == chroma.NameBuiltin:
++		return editor.TokenFunction
++	case t == chroma.NameTag:
++		return editor.TokenTag
++	case t == chroma.NameAttribute:
++		return editor.TokenAttribute
++	case t == chroma.NameProperty:
++		return editor.TokenProperty
++	case t == chroma.NameDecorator, t == chroma.CommentPreproc, t == chroma.CommentPreprocFile:
++		return editor.TokenMeta
++	case t == chroma.NameVariable, t.InSubCategory(chroma.NameVariable):
++		return editor.TokenVariable
++	case t == chroma.LiteralStringEscape, t == chroma.LiteralStringInterpol:
++		return editor.TokenEscape
++	case t == chroma.LiteralStringRegex:
++		return editor.TokenRegexp
++	case t.InCategory(chroma.Keyword):
++		return editor.TokenKeyword
++	case t.InSubCategory(chroma.LiteralString):
++		return editor.TokenString
++	case t.InSubCategory(chroma.LiteralNumber):
++		return editor.TokenNumber
++	case t.InCategory(chroma.Comment):
++		return editor.TokenComment
++	case t.InCategory(chroma.Operator):
++		return editor.TokenOperator
++	case t == chroma.Punctuation:
++		return editor.TokenPunctuation
++	case t == chroma.GenericDeleted:
++		return editor.TokenDeleted
++	case t == chroma.GenericInserted:
++		return editor.TokenInserted
++	case t == chroma.GenericHeading, t == chroma.GenericSubheading:
++		return editor.TokenHeading
++	case t == chroma.GenericEmph:
++		return editor.TokenEmphasis
++	case t == chroma.GenericStrong:
++		return editor.TokenStrong
++	}
++	return editor.TokenText
++}
+diff --git a/files.go b/files.go
+index 5fbec60..1d193e8 100644
+--- a/files.go
++++ b/files.go
+@@ -402,7 +402,7 @@ func (a *App) showFile(fv *fileView, data []byte) {
+ func showFileText(fv *fileView, text string) {
+ 	if fv.st == nil {
+ 		buf := editor.NewBuffer(text)
+-		buf.SetLanguage(editor.LanguageFor(path.Base(fv.rel)))
++		buf.SetLanguage(languageFor(path.Base(fv.rel)))
+ 		fv.st = &editor.State{Buffer: buf}
+ 		return
+ 	}
+diff --git a/go.mod b/go.mod
+index 6ae25c2..c5d2c4d 100644
+--- a/go.mod
++++ b/go.mod
+@@ -6,6 +6,7 @@ tool github.com/egoist/mygo/cmd/mygo
+ 
+ require (
+ 	github.com/BurntSushi/toml v1.6.0
++	github.com/alecthomas/chroma/v2 v2.27.0
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/ebitengine/purego v0.11.1
+ 	github.com/egoist/mygo v0.7.4-0.20261031122854-1caad8788978
+@@ -15,6 +16,7 @@ require (
+ )
+ 
+ require (
++	github.com/dlclark/regexp2/v2 v2.2.1 // indirect
+ 	github.com/go-text/typesetting v0.3.5 // indirect
+ 	golang.org/x/image v0.46.0 // indirect
+ 	golang.org/x/net v0.59.0 // indirect
+diff --git a/go.sum b/go.sum
+index 918347b..b1af465 100644
+--- a/go.sum
++++ b/go.sum
+@@ -1,7 +1,15 @@
+ github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
+ github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
++github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
++github.com/alecthomas/assert/v2 v2.11.0/go.mod h1:Bze95FyfUr7x34QZrjL+XP+0qgp/zg8yS+TtBj1WA3k=
++github.com/alecthomas/chroma/v2 v2.27.0 h1:FodwmyOBgJULFYmDqibcp9pvfDLWdtPRh9v/r5BXYZs=
++github.com/alecthomas/chroma/v2 v2.27.0/go.mod h1:NjJ3ciIgrqBNeIkWZ4e46nseoLDslxU1LmfCoL+wcY8=
++github.com/alecthomas/repr v0.5.2 h1:SU73FTI9D1P5UNtvseffFSGmdNci/O6RsqzeXJtP0Qs=
++github.com/alecthomas/repr v0.5.2/go.mod h1:Fr0507jx4eOXV7AlPV6AVZLYrLIuIeSOWtW57eE/O/4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ github.com/coder/websocket v1.8.14/go.mod h1:NX3SzP+inril6yawo5CQXx8+fk145lPDC6pumgx0mVg=
++github.com/dlclark/regexp2/v2 v2.2.1 h1:mf4KkFUj0gJuarK8P+LgiS+Lit7m9N1yAwEfPbee7R0=
++github.com/dlclark/regexp2/v2 v2.2.1/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
+ github.com/ebitengine/purego v0.11.1 h1:2zpWRSQNVKN4eKsKO9eM1ILDgWfYMY9GwqRmK6XeQ/0=
+ github.com/ebitengine/purego v0.11.1/go.mod h1:DCHPP08djqhNSoTfImcnHYQRZmd0qhakvrozqaEYhGQ=
+ github.com/egoist/mygo v0.7.4-0.20261031122854-1caad8788978 h1:wmeocTP4liWUf0ZSv/S5QAqmUNLI1zJ7Vl2tjFy3ly4=
+@@ -12,6 +20,8 @@ github.com/go-text/typesetting-utils v0.0.0-20260419141703-4ffe8874dabc h1:8FGo2
+ github.com/go-text/typesetting-utils v0.0.0-20260419141703-4ffe8874dabc/go.mod h1:3/62I4La/HBRX9TcTpBj4eipLiwzf+vhI+7whTc9V7o=
+ github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8=
+ github.com/hashicorp/yamux v0.1.2/go.mod h1:C+zze2n6e/7wshOZep2A70/aQU6QBRWJO/G6FT1wIns=
++github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
++github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
+ golang.org/x/image v0.46.0 h1:b1+oYj0Jbp6K5MDT4i4/eZpYlk3V8SJhhDKh6LBHAyQ=
+ golang.org/x/image v0.46.0/go.mod h1:3B3W05VGVQyuXucLINLjXKrqISASfi4Xj+iCVkLMwew=
+ golang.org/x/net v0.59.0 h1:5zfYln+w5XCxwrnMMJPufRgNoXEaGxl0wo5GqPXyues=
+diff --git a/side.go b/side.go
+index d38820d..54d9441 100644
+--- a/side.go
++++ b/side.go
+@@ -1157,7 +1157,7 @@ func (a *App) showText(sf *sideFile, t proto.GitText) {
+ 			sf.d.SetPatch(files[0])
+ 		}
+ 	case sf.d == nil || sf.patch:
+-		lang := editor.LanguageFor(path.Base(sf.f.Path))
++		lang := languageFor(path.Base(sf.f.Path))
+ 		old, now := editor.NewBuffer(t.Old), editor.NewBuffer(t.New)
+ 		old.SetLanguage(lang)
+ 		now.SetLanguage(lang)

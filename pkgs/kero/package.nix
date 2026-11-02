@@ -44,7 +44,10 @@ stdenv.mkDerivation (finalAttrs: {
       hash = "sha256-lhCdEPCuBkPWZznIeSoFPxfhxqjEt3uC6xPjWXRdrEg=";
     };
 
-    vendorHash = "sha256-KiVj3Neaot04qgHKP1XDhuxK8jlK7ALkmSSdBRqjRV4=";
+    # Chroma highlights, in the diffs and viewer, the files MyGo has no language for
+    patches = [ ./chroma-fallback.patch ];
+
+    vendorHash = "sha256-HV71J4ABokZO6HHB2YE2LWEEOFDzMfW1/9ElFfR3OUc=";
     subPackages = [ "." ];
     # No minimize, maximize or close buttons, nor the room kept for them: niri
     # has no use for them

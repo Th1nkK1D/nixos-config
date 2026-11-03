@@ -129,7 +129,7 @@ in
           claudeAgentAcp
           claudeCode
           cloudflared
-          (codiff.override { withAutoHideMenuBar = true; })
+          codiff
           curtail
           dux-calendar
           decibels

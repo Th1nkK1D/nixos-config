@@ -76,6 +76,10 @@ stdenv.mkDerivation (finalAttrs: {
         "const electron = '${placeholder "out"}/lib/codiff/codiff-app';" \
       --replace-fail "spawn(electron, [root], {" "spawn(electron, [], {" \
       --replace-fail " || (await detectDevServer(DEV_SERVER_URL))" ""
+
+    # The in-app terminal helper would link the bare script, which needs a system node
+    substituteInPlace electron/main/terminal-helper.cjs \
+      --replace-fail "join(root, 'bin/codiff.js')" "'${placeholder "out"}/bin/codiff'"
   ''
   + lib.optionalString withAutoHideMenuBar ''
     # Hide the menu bar like on other platforms; press Alt to reveal it

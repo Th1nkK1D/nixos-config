@@ -26,6 +26,7 @@
           ];
         });
         strata = prev.strata.override { enableUnfree = true; };
+        codiff = prev.codiff.override { withAutoHideMenuBar = true; };
         # The desktop entry hardcodes --gtk-single-instance=true, so arguments from
         # xdg-terminal-exec (e.g. Strata's "Open terminal here") were ignores.
         # symlinkJoin instead of overrideAttrs to avoid rebuilding ghostty.

@@ -21,6 +21,9 @@ in
       home = {
         stateVersion = "25.11";
         file = {
+          # Codiff's in-app "Install Skill" links into its store path, which breaks
+          # once that is garbage-collected
+          ".claude/skills/codiff".source = "${pkgs.codiff}/lib/codiff/claude/skills/codiff";
           # Apply default dark style to KDE app
           ".config/kdeglobals".text = ''
             [Colors:Window]

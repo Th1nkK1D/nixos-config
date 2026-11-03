@@ -67,7 +67,8 @@ stdenv.mkDerivation (finalAttrs: {
       substituteInPlace side.go \
         --replace-fail 'd.FitContent = true' 'd.FitContent = true; d.Wrap = true'
     '';
-    # Alt+click on the shell prompt moves its cursor, in the vendored terminal widget
+    # Alt+click on the shell prompt moves its cursor, in the vendored terminal widget.
+    # Merged upstream in egoist/mygo@9b63340: drop this once Kero's mygo includes it
     preBuild = ''
       chmod -R u+w vendor/github.com/egoist/mygo
       patch -d vendor/github.com/egoist/mygo -p2 < ${./mygo-click-to-move.patch}

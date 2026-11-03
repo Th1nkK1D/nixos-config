@@ -49,15 +49,23 @@ stdenv.mkDerivation (finalAttrs: {
 
     vendorHash = "sha256-HV71J4ABokZO6HHB2YE2LWEEOFDzMfW1/9ElFfR3OUc=";
     subPackages = [ "." ];
-    # No minimize, maximize or close buttons, nor the room kept for them: niri
-    # has no use for them
     postPatch = ''
+      # No minimize, maximize or close buttons, nor the room kept for them: niri
+      # has no use for them
       substituteInPlace platform.go \
         --replace-fail '!ownControls || w == nil' 'true' \
         --replace-fail '!ownControls || a.win == nil' 'true' \
         --replace-fail 'return in && y < headerH' 'return false && in && y < headerH'
       substituteInPlace side.go \
         --replace-fail 'ownControls && a.win != nil' 'false'
+
+      # Long lines wrap in the file viewer and the diffs instead of scrolling sideways.
+      # egoist/kero#241 sets SoftWrap on the viewer itself, so the files.go part
+      # can go once it is released
+      substituteInPlace files.go \
+        --replace-fail 'editor.State{Buffer: buf}' 'editor.State{Buffer: buf, SoftWrap: true}'
+      substituteInPlace side.go \
+        --replace-fail 'd.FitContent = true' 'd.FitContent = true; d.Wrap = true'
     '';
     # Alt+click on the shell prompt moves its cursor, in the vendored terminal widget
     preBuild = ''

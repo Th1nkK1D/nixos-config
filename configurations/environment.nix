@@ -5,6 +5,8 @@
       # GTK4's default Vulkan renderer enumerates every Vulkan device, waking the
       # runtime-suspended NVIDIA dGPU and adding ~2s to each cold app launch
       GSK_RENDERER = "ngl";
+      # GTK3 apps open file dialogs through the portal, so they use Strata
+      GTK_USE_PORTAL = 1;
       NIXOS_OZONE_WL = 1;
       QT_QPA_PLATFORM = "wayland;xcb";
       QT_QPA_PLATFORMTHEME = "gtk3";

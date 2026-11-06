@@ -134,7 +134,6 @@ stdenv.mkDerivation (finalAttrs: {
   preFixup = ''
     makeWrapper $out/lib/kero/kero $out/bin/kero \
       "''${gappsWrapperArgs[@]}" \
-      --set GTK_USE_PORTAL 1 \
       --set-default KERO_WINDOW_CONTROLS 0 \
       --prefix LD_LIBRARY_PATH : "$runtimeLibs"
   '';

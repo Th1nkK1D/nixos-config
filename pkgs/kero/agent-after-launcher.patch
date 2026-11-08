@@ -1,0 +1,15 @@
+diff --git a/internal/daemon/daemon.go b/internal/daemon/daemon.go
+index 3956160..fa14ae5 100644
+--- a/internal/daemon/daemon.go
++++ b/internal/daemon/daemon.go
+@@ -637,6 +637,10 @@ func detectAgent(name string, args []string) string {
+ 			}
+ 		}
+ 	}
++	// A launcher, as a sandbox, runs the agent after "--": nono run … -- claude.
++	if i := slices.Index(args, "--"); i >= 0 && i+1 < len(args) {
++		return detectAgent(filepath.Base(args[i+1]), args[i+1:])
++	}
+ 	return ""
+ }
+

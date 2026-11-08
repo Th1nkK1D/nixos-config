@@ -24,6 +24,9 @@ in
           # Codiff's in-app "Install Skill" links into its store path, which breaks
           # once that is garbage-collected
           ".claude/skills/codiff".source = "${pkgs.codiff}/lib/codiff/claude/skills/codiff";
+          # Kero rewrites its own copy of the skill at runtime and links to it; this
+          # one comes from the installed package instead
+          ".claude/skills/kero/SKILL.md".source = "${pkgs.kero}/share/kero/skills/kero/SKILL.md";
           # Apply default dark style to KDE app
           ".config/kdeglobals".text = ''
             [Colors:Window]

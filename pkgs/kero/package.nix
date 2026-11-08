@@ -29,7 +29,7 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "kero";
-  version = "2.1.34";
+  version = "2.1.35";
 
   # Built from source for the patch only; libghostty-vt and the fonts still
   # come from the release tarball, which `mygo build` would otherwise fetch
@@ -41,23 +41,19 @@ stdenv.mkDerivation (finalAttrs: {
       owner = "egoist";
       repo = "kero";
       tag = "v${finalAttrs.version}";
-      hash = "sha256-jvR/zqEox1z9XX+yRooOQDniSTXcZp65fHQp3gdrELI=";
+      hash = "sha256-O1HyygzXJeSkpRo4OgVvypn3QsUi5A4ahD6t9PNm4V8=";
     };
 
-    # Chroma highlights, in the diffs and viewer, the files MyGo has no language for
-    patches = [ ./chroma-fallback.patch ];
+    patches = [
+      # Chroma highlights, in the diffs and viewer, the files MyGo has no language for
+      ./chroma-fallback.patch
+      # The sidebar finds the agent a sandbox such as `nono run -- claude` launches.
+      # Unreleased as of 2.1.35: drop this once a release includes it
+      ./agent-after-launcher.patch
+    ];
 
-    vendorHash = "sha256-6KucxMf6C7Wf6o+ibAy5JhGqldco2m1wty80QOtiLKw=";
+    vendorHash = "sha256-6+966ddf8vwGSXz5SerouLNwln71mqVclzUgqgS15Bc=";
     subPackages = [ "." ];
-    postPatch = ''
-      # Long lines wrap in the file viewer and the diffs instead of scrolling sideways.
-      # egoist/kero#241 sets SoftWrap on the viewer itself, so the files.go part
-      # can go once it is released
-      substituteInPlace files.go \
-        --replace-fail 'editor.State{Buffer: buf}' 'editor.State{Buffer: buf, SoftWrap: true}'
-      substituteInPlace side.go \
-        --replace-fail 'd.FitContent = true' 'd.FitContent = true; d.Wrap = true'
-    '';
     doCheck = false;
 
     # What `mygo build` links in
@@ -73,7 +69,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   src = fetchurl {
     url = "https://github.com/egoist/kero/releases/download/v${finalAttrs.version}/kero-${finalAttrs.version}-linux-amd64.tar.gz";
-    hash = "sha256-SGLZ14yfno6ZdZR2Eo6HdMPDCAwL4p5sMZDPaGfq33A=";
+    hash = "sha256-Wl9G6QC9ZH9CKjp5OCFXgUAwIAswruVTxSXzhLWUCMQ=";
   };
 
   sourceRoot = ".";
@@ -124,6 +120,9 @@ stdenv.mkDerivation (finalAttrs: {
     install -Dm755 -t $out/lib/kero libghostty-vt.so
     install -Dm755 ${finalAttrs.app}/bin/kero $out/lib/kero/kero
     cp -r fonts $out/lib/kero/
+
+    install -d $out/share/kero/skills/kero
+    HOME=$TMPDIR ${finalAttrs.app}/bin/kero skill show > $out/share/kero/skills/kero/SKILL.md
 
     install -Dm644 kero.png $out/share/pixmaps/kero.png
     install -Dm644 kero.desktop $out/share/applications/kero.desktop

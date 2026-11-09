@@ -200,7 +200,7 @@ in
         git = {
           enable = true;
           settings = {
-            credential.helper = "${pkgs.git.override { withLibsecret = true; }}/bin/git-credential-libsecret";
+            credential."https://github.com".helper = "!${pkgs.gh}/bin/gh auth git-credential";
             init.defaultBranch = "main";
             pull.rebase = true;
             push.autoSetupRemote = true;

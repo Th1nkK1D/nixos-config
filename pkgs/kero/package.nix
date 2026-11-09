@@ -24,6 +24,7 @@
   libsoup_3,
   libx11,
   pango,
+  wakatime-cli,
   webkitgtk_4_1,
 }:
 
@@ -50,6 +51,9 @@ stdenv.mkDerivation (finalAttrs: {
       # The sidebar finds the agent a sandbox such as `nono run -- claude` launches.
       # Unreleased as of 2.1.35: drop this once a release includes it
       ./agent-after-launcher.patch
+      # WakaTime heartbeats through wakatime-cli (when on PATH) for files opened,
+      # edited and saved in the viewer
+      ./wakatime.patch
     ];
 
     vendorHash = "sha256-6+966ddf8vwGSXz5SerouLNwln71mqVclzUgqgS15Bc=";
@@ -134,6 +138,7 @@ stdenv.mkDerivation (finalAttrs: {
     makeWrapper $out/lib/kero/kero $out/bin/kero \
       "''${gappsWrapperArgs[@]}" \
       --set-default KERO_WINDOW_CONTROLS 0 \
+      --suffix PATH : ${lib.makeBinPath [ wakatime-cli ]} \
       --prefix LD_LIBRARY_PATH : "$runtimeLibs"
   '';
 

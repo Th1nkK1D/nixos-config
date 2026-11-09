@@ -1,0 +1,130 @@
+diff --git a/edits.go b/edits.go
+index 22578cc..31410b9 100644
+--- a/edits.go
++++ b/edits.go
+@@ -26,6 +26,7 @@ import (
+ // edited is what the viewer keeps of a text the user edits.
+ type edited struct {
+ 	saving bool
++	beat   uint64 // the buffer's version a WakaTime heartbeat was last sent for
+ }
+ 
+ // editTarget is a text the user edits in the viewer, and its file.
+@@ -158,6 +159,9 @@ func (a *App) saveText(t editTarget, force bool, done func(ok bool)) {
+ 				done(false)
+ 			default:
+ 				*t.hash = written
++				if !a.hostOf(t.pane).remote() {
++					wakaBeat(t.path, "coding", true)
++				}
+ 				if t.buf.Version() == v {
+ 					t.buf.MarkSaved()
+ 				}
+diff --git a/files.go b/files.go
+index 158fea6..89f37fa 100644
+--- a/files.go
++++ b/files.go
+@@ -350,6 +350,7 @@ func (a *App) fileViewer(c *ui.Context, pal *palette, s *proto.Session, fv *file
+ 		fv.st.Theme = a.codeTheme(c, pal)
+ 		fv.st.NoScrollPastEnd = true
+ 		fv.st.SoftWrap = a.set.WrapLines
++		a.wakaEdited(a.fileTarget(fv))
+ 		editor.View(c.Key("text-"+fv.path), fv.st).Grow(1).FillWidth().MinHeight(0)
+ 	}
+ }
+diff --git a/side.go b/side.go
+index 1ad6e2a..4a37192 100644
+--- a/side.go
++++ b/side.go
+@@ -226,6 +226,7 @@ func (a *App) openView(s *proto.Session, kind string, f *fileView) {
+ 	v.kind = kind
+ 	if f != nil {
+ 		v.file = f
++		a.wakaOpened(f.pane, f.path)
+ 	}
+ }
+ 
+@@ -955,6 +956,7 @@ func (a *App) fileDiff(c *ui.Context, pal *palette, s *proto.Session, scope stri
+ 			if diff.FocusWithin() {
+ 				ch.focus = sf
+ 			}
++			a.wakaEdited(a.diffTarget(sf))
+ 		}
+ 	})
+ }
+diff --git a/wakatime.go b/wakatime.go
+new file mode 100644
+index 0000000..295b8e9
+--- /dev/null
++++ b/wakatime.go
+@@ -0,0 +1,70 @@
++package main
++
++import (
++	"os/exec"
++	"strconv"
++	"sync"
++	"time"
++
++	"kero/internal/proto"
++)
++
++// Kero sends WakaTime heartbeats for the files of this computer the user
++// opens, edits and saves in the viewer, through wakatime-cli, which reads
++// ~/.wakatime.cfg. Coding agents' own plugins send theirs, under their own
++// plugin name, so none counts twice. No wakatime-cli on the PATH, no
++// heartbeats.
++
++const wakaEvery = 2 * time.Minute
++
++var waka struct {
++	once sync.Once
++	bin  string
++	mu   sync.Mutex
++	last map[string]time.Time
++}
++
++// wakaBeat sends a heartbeat for a file: a write always, else at most
++// every wakaEvery for the file.
++func wakaBeat(file, category string, write bool) {
++	waka.once.Do(func() { waka.bin, _ = exec.LookPath("wakatime-cli") })
++	if waka.bin == "" {
++		return
++	}
++	waka.mu.Lock()
++	if waka.last == nil {
++		waka.last = map[string]time.Time{}
++	}
++	if !write && time.Since(waka.last[file]) < wakaEvery {
++		waka.mu.Unlock()
++		return
++	}
++	waka.last[file] = time.Now()
++	waka.mu.Unlock()
++	args := []string{"--entity", file, "--category", category, "--plugin", "kero/" + strconv.Itoa(proto.Version)}
++	if write {
++		args = append(args, "--write")
++	}
++	go exec.Command(waka.bin, args...).Run()
++}
++
++// wakaOpened is the heartbeat of a file the user opens in the viewer, to
++// read.
++func (a *App) wakaOpened(pane, file string) {
++	if !a.hostOf(pane).remote() {
++		wakaBeat(file, "code reviewing", false)
++	}
++}
++
++// wakaEdited is the heartbeat of a text the user edits, as its buffer's
++// version moves past the last it sent one for; the viewer calls it as it
++// draws.
++func (a *App) wakaEdited(t editTarget) {
++	if t.buf == nil || !t.buf.Modified() || a.hostOf(t.pane).remote() {
++		return
++	}
++	if v := t.buf.Version(); v != t.edits.beat {
++		t.edits.beat = v
++		wakaBeat(t.path, "coding", false)
++	}
++}

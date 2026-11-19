@@ -30,9 +30,9 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "kero";
-  version = "2.1.35";
+  version = "2.1.36";
 
-  # Built from source for the patch only; libghostty-vt and the fonts still
+  # Built from source for the patches only; libghostty-vt and the fonts still
   # come from the release tarball, which `mygo build` would otherwise fetch
   app = (buildGoModule.override { go = go_1_27; }) {
     pname = "kero-app";
@@ -42,21 +42,26 @@ stdenv.mkDerivation (finalAttrs: {
       owner = "egoist";
       repo = "kero";
       tag = "v${finalAttrs.version}";
-      hash = "sha256-O1HyygzXJeSkpRo4OgVvypn3QsUi5A4ahD6t9PNm4V8=";
+      hash = "sha256-JSJ4u76cEjiHf9UMvQk+Ey5y3K3a1T6o71o+mz0crS8=";
     };
 
     patches = [
-      # Chroma highlights, in the diffs and viewer, the files MyGo has no language for
-      ./chroma-fallback.patch
       # The sidebar finds the agent a sandbox such as `nono run -- claude` launches.
-      # Unreleased as of 2.1.35: drop this once a release includes it
+      # Unreleased as of 2.1.36: drop this once a release includes it
       ./agent-after-launcher.patch
       # WakaTime heartbeats through wakatime-cli (when on PATH) for files opened,
       # edited and saved in the viewer
       ./wakatime.patch
     ];
 
-    vendorHash = "sha256-6+966ddf8vwGSXz5SerouLNwln71mqVclzUgqgS15Bc=";
+    # MyGo is a vendored module, so patch its copy after vendoring (keeps vendorHash).
+    # Unreleased as of 2.1.36: drop this once Kero pins a MyGo with Astro highlighting
+    preBuild = ''
+      chmod -R u+w vendor/github.com/egoist/mygo
+      patch -p1 -d vendor/github.com/egoist/mygo < ${./mygo-astro.patch}
+    '';
+
+    vendorHash = "sha256-F8xtFCh48EVyLIBJAjORvbh15TFb7Kp6bm5UbC+bmKQ=";
     subPackages = [ "." ];
     doCheck = false;
 
@@ -73,7 +78,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   src = fetchurl {
     url = "https://github.com/egoist/kero/releases/download/v${finalAttrs.version}/kero-${finalAttrs.version}-linux-amd64.tar.gz";
-    hash = "sha256-Wl9G6QC9ZH9CKjp5OCFXgUAwIAswruVTxSXzhLWUCMQ=";
+    hash = "sha256-axNwftgYlgqycxtiLBpTv0EI5ZZ8/w9c9U6I/i0e6Ho=";
   };
 
   sourceRoot = ".";

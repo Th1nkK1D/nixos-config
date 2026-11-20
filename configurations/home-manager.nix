@@ -132,35 +132,6 @@ in
           enable = true;
           interactiveShellInit = ''
             set fish_greeting
-
-            # Kero only spins its tab for agents; report other commands so it does too.
-            # Agents and full-screen programs are left out: a declared status
-            # replaces Kero's own screen detection for them.
-            if set -q KERO_PANE
-              set -g __kero_skip claude codex pi opencode gemini amp cursor-agent vim nvim hx micro nano less man ssh htop btop lazygit git-forgit fish kero
-
-              # Dev servers and watchers never finish, so a spinner would never stop.
-              function __kero_quiet
-                set -l cmd (string split ' ' -- $argv[1])[1]
-                contains -- $cmd $__kero_skip
-                or string match -qr '^(bun|pnpm|npm|yarn)( run)? (dev|start|serve|watch)\b|^docker[ -]compose up\b(?!.* (-d|--detach)\b)|^tail .*-f|^git forgit\b' -- $argv[1]
-              end
-
-              function __kero_preexec --on-event fish_preexec
-                __kero_quiet $argv[1]; and return
-                kero report working $argv[1] >/dev/null 2>&1
-              end
-
-              function __kero_postexec --on-event fish_postexec
-                set -l code $status
-                __kero_quiet $argv[1]; and return
-                if test $code -eq 0 -o $code -eq 130
-                  kero report clear >/dev/null 2>&1
-                else
-                  kero report error "exit $code" >/dev/null 2>&1
-                end
-              end
-            end
           '';
           plugins = [
             {

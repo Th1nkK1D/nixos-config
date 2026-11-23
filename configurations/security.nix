@@ -38,4 +38,7 @@
     };
     rtkit.enable = true;
   };
+
+  # polkit only reads actions from the system profile, which the unlock policy needs
+  environment.systemPackages = [ pkgs.bitwarden-desktop ];
 }

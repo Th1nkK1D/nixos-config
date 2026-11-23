@@ -21,11 +21,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "open-pencil-desktop";
-  version = "0.16.0";
+  version = "0.17.0";
 
   src = fetchurl {
     url = "https://github.com/open-pencil/open-pencil/releases/download/v${finalAttrs.version}/OpenPencil_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-RR6Q79Rgf1KP9ecF38b2GT6u7yIsM6pp6/vYY9FwvXM=";
+    hash = "sha256-fuxRsdxJUZWrTCp4N4TetZfQXI10zUZK860wa0TIXI0=";
   };
 
   nativeBuildInputs = [
@@ -52,20 +52,13 @@ stdenv.mkDerivation (finalAttrs: {
 
     cp -r usr $out
 
-    # CanvasKit returns a null shader for degenerate gradients (e.g. a gradient
-    # stroke on a zero-height line), and the gradient paint helper deletes it
-    # unchecked, aborting the render pass. The fix has to go into the minified
-    # frontend embedded in the binary; the script fails the build once upstream
-    # code no longer matches
-    python3 ${./patch-assets.py} $out/bin/OpenPencil \
-      '(\w+)=>\{try\{(\w+)\.setShader\(\1\)\}finally\{\1\.delete\(\)\}\}' \
-      '\1=>{try{\2.setShader(\1)}finally{\1?.delete()}}'
-
     # WebKitGTK rasterizes CSS url() cursors at 1x, so the SVG tool cursors
     # (hand, pen, pencil, comment) come out pixelated on scaled outputs. Use
-    # their named fallbacks (grab, grabbing, crosshair) from the cursor theme
+    # their named fallbacks (grab, grabbing, crosshair) from the cursor theme.
+    # The fix has to go into the minified frontend embedded in the binary; the
+    # script fails the build once upstream code no longer matches
     python3 ${./patch-assets.py} $out/bin/OpenPencil \
-      'function (\w+)\((\w+),(\w+),(\w+),(\w+)\)\{return`url\("data:image/svg\+xml,\$\{encodeURIComponent\(\2\)\}"\) \$\{\3\} \$\{\4\}, \$\{\5\}`\}' \
+      'function (\w+)\((\w+),(\w+),(\w+),(\w+)\)\{return`url\("\$\{\w+\(\2\)\}"\) \$\{\3\} \$\{\4\}, \$\{\5\}`\}' \
       'function \1(\2,\3,\4,\5){return \5}'
 
     substituteInPlace $out/share/applications/OpenPencil.desktop \

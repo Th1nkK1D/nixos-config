@@ -41,16 +41,16 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "strata";
-  version = "1.2.1";
+  version = "1.2.2";
 
   src = fetchFromGitHub {
     owner = "lgse";
     repo = "strata";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-pK8XAf3fjSVBUWz73iWHnCvqyBgSfWScLig2R5o95yk=";
+    hash = "sha256-V5FcVvY099hyylEcTWkPckslHhXsYIJLfgh3zlO+dGY=";
   };
 
-  cargoHash = "sha256-GPHrEHKwu2LsSnMv9rr/mZtviijR3BzDBkhYuQmEgwM=";
+  cargoHash = "sha256-Rju62A+SzBo03iD82iwCK2s5nogeyE8yMhpZ0svKxDs=";
 
   buildNoDefaultFeatures = !enableUnfree;
 
@@ -58,7 +58,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # add their store dirs there. The STRATA_SANDBOX_* build vars deliberately
   # don't cover this lookup (docs/preview-sandbox.md)
   postPatch = ''
-    substituteInPlace src/trusted_command.rs \
+    substituteInPlace crates/strata-core/src/trusted_command.rs \
       --replace-fail '"/run/current-system/sw/bin",' '"/run/current-system/sw/bin", "${bubblewrap}/bin", "${xdg-utils}/bin",'
   '';
 

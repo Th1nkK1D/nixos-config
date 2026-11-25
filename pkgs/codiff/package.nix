@@ -31,7 +31,7 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "codiff";
-  version = "1.20.1";
+  version = "1.20.2";
 
   __structuredAttrs = true;
   strictDeps = true;
@@ -40,14 +40,14 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "nkzw-tech";
     repo = "codiff";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-sQvUjrphYRa7S5qtnhvvPTRK2n2t1z511yILE+LmZPk=";
+    hash = "sha256-M1gP0QsMOViYLNmkk8+W29APeM/Oe2dq+yG6lahAEHk=";
   };
 
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
     pnpm = pnpm_12;
     fetcherVersion = 5;
-    hash = "sha256-U3a0VuvdD3pcQVBGQefl6YxLzUYmk02RdUcbiOdgiGY=";
+    hash = "sha256-9lpqgH3wjvKW/wGleeqk3lB6f7LQbyvVh9W0sQqTy4U=";
   };
 
   nativeBuildInputs = [

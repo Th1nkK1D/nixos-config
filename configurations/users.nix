@@ -122,6 +122,7 @@ in
           bat
           beeper
           blanket
+          browse
           bruno
           bun
           caddy

@@ -6,6 +6,7 @@ My NixOS configuration, plus a few packages that aren't in nixpkgs yet.
 
 | Package | Description |
 | --- | --- |
+| [browse](https://github.com/anomalyco/browse) | Let AI agents use your real browser: an MCP server and a Chromium extension |
 | [codiff](https://github.com/nkzw-tech/codiff) | Minimal local diff viewer for reviewing and committing Git changes |
 | [kero](https://kero.sh) | Native terminal app for running coding agents in sessions that outlive the window |
 | [open-pencil-cli](https://openpencil.dev/programmable/cli/inspecting) | Inspect, analyze, script, and export .fig and .pen files from the terminal |

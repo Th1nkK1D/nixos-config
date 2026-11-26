@@ -25,6 +25,17 @@
             })
           ];
         });
+        # GTK_USE_PORTAL=1 (environment.nix) makes oo7 think it is sandboxed, so
+        # Authenticator reads an empty portal file keyring instead of the Secret Service.
+        # symlinkJoin instead of overrideAttrs to avoid rebuilding it.
+        authenticator = prev.symlinkJoin {
+          inherit (prev.authenticator) name meta passthru;
+          paths = [ prev.authenticator ];
+          nativeBuildInputs = [ prev.makeWrapper ];
+          postBuild = ''
+            wrapProgram $out/bin/authenticator --unset GTK_USE_PORTAL
+          '';
+        };
         strata = prev.strata.override { enableUnfree = true; };
         codiff = prev.codiff.override { withAutoHideMenuBar = true; };
         # The desktop entry hardcodes --gtk-single-instance=true, so arguments from
